@@ -1,0 +1,250 @@
+{
+  "execution_history": [
+    {
+      "execution_metadata": {
+        "execution_id": "20251005_161249",
+        "execution_time": "2025-10-05T16:12:49",
+        "duration_seconds": 45.2,
+        "environment": "production",
+        "application": "cross_db_validator",
+        "excel_file": "inputs/test_suite.xlsx",
+        "data_collection_version": "1.0"
+      },
+      
+      "overall_summary": {
+        "total_tests": 38,
+        "passed_tests": 26,
+        "failed_tests": 9,
+        "skipped_tests": 3,
+        "passed_rate": 68.42,
+        "failed_rate": 23.68,
+        "skipped_rate": 7.89
+      },
+      
+      "sheet_level_results": {
+        "SMOKE": {
+          "summary": {
+            "total_tests": 25,
+            "passed_tests": 18,
+            "failed_tests": 5,
+            "skipped_tests": 2,
+            "passed_rate": 72.0,
+            "failed_rate": 20.0,
+            "skipped_rate": 8.0
+          },
+          "test_cases": [
+            {
+              "test_case_id": "SMOKE_PG_001",
+              "test_case_name": "Environment Setup Validation",
+              "test_category": "SETUP",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 1250,
+              "tags": ["setup", "environment"],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_002",
+              "test_case_name": "Configuration Availability",
+              "test_category": "CONFIGURATION",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 850,
+              "tags": ["config"],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_003",
+              "test_case_name": "Credentials Validation",
+              "test_category": "SECURITY",
+              "priority": "HIGH",
+              "status": "FAILED",
+              "execution_time_ms": 2100,
+              "tags": ["security", "credentials"],
+              "error_message": null
+            }
+          ]
+        },
+        
+        "DATAVALIDATIONS": {
+          "summary": {
+            "total_tests": 13,
+            "passed_tests": 8,
+            "failed_tests": 4,
+            "skipped_tests": 1,
+            "passed_rate": 61.54,
+            "failed_rate": 30.77,
+            "skipped_rate": 7.69
+          },
+          "test_cases": [
+            {
+              "test_case_id": "DVAL_001",
+              "test_case_name": "Products Data Validation",
+              "test_category": "DATAVALIDATION",
+              "priority": "MEDIUM",
+              "status": "FAILED",
+              "execution_time_ms": 3200,
+              "tags": ["data", "validation", "products"],
+              "error_message": null
+            },
+            {
+              "test_case_id": "DVAL_002",
+              "test_case_name": "Employees Data Validation",
+              "test_category": "DATAVALIDATION",
+              "priority": "MEDIUM",
+              "status": "PASSED",
+              "execution_time_ms": 2800,
+              "tags": ["data", "validation", "employees"],
+              "error_message": null
+            }
+          ]
+        }
+      },
+      
+      "category_level_results": {
+        "SETUP": {
+          "total_tests": 5,
+          "passed_tests": 4,
+          "failed_tests": 1,
+          "skipped_tests": 0,
+          "passed_rate": 80.0,
+          "failed_rate": 20.0,
+          "skipped_rate": 0.0
+        },
+        "CONFIGURATION": {
+          "total_tests": 3,
+          "passed_tests": 3,
+          "failed_tests": 0,
+          "skipped_tests": 0,
+          "passed_rate": 100.0,
+          "failed_rate": 0.0,
+          "skipped_rate": 0.0
+        },
+        "SECURITY": {
+          "total_tests": 4,
+          "passed_tests": 2,
+          "failed_tests": 2,
+          "skipped_tests": 0,
+          "passed_rate": 50.0,
+          "failed_rate": 50.0,
+          "skipped_rate": 0.0
+        },
+        "CONNECTION": {
+          "total_tests": 6,
+          "passed_tests": 5,
+          "failed_tests": 1,
+          "skipped_tests": 0,
+          "passed_rate": 83.33,
+          "failed_rate": 16.67,
+          "skipped_rate": 0.0
+        },
+        "DATAVALIDATION": {
+          "total_tests": 15,
+          "passed_tests": 10,
+          "failed_tests": 4,
+          "skipped_tests": 1,
+          "passed_rate": 66.67,
+          "failed_rate": 26.67,
+          "skipped_rate": 6.67
+        },
+        "QUERIES": {
+          "total_tests": 5,
+          "passed_tests": 2,
+          "failed_tests": 1,
+          "skipped_tests": 2,
+          "passed_rate": 40.0,
+          "failed_rate": 20.0,
+          "skipped_rate": 40.0
+        }
+      },
+      
+      "test_case_details": {
+        "SMOKE_PG_001": {
+          "last_status": "PASSED",
+          "execution_time_ms": 1250,
+          "sheet_name": "SMOKE",
+          "test_category": "SETUP",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_002": {
+          "last_status": "PASSED",
+          "execution_time_ms": 850,
+          "sheet_name": "SMOKE",
+          "test_category": "CONFIGURATION",
+          "priority": "HIGH"
+        },
+        "DVAL_001": {
+          "last_status": "FAILED",
+          "execution_time_ms": 3200,
+          "sheet_name": "DATAVALIDATIONS",
+          "test_category": "DATAVALIDATION",
+          "priority": "MEDIUM"
+        }
+      },
+      
+      "performance_metrics": {
+        "total_execution_time_ms": 45200,
+        "average_test_time_ms": 1189.47,
+        "slowest_tests": [
+          {
+            "test_id": "DVAL_001",
+            "execution_time_ms": 3200,
+            "sheet_name": "DATAVALIDATIONS"
+          },
+          {
+            "test_id": "DVAL_005",
+            "execution_time_ms": 2950,
+            "sheet_name": "DATAVALIDATIONS"
+          }
+        ],
+        "fastest_tests": [
+          {
+            "test_id": "SMOKE_PG_002",
+            "execution_time_ms": 850,
+            "sheet_name": "SMOKE"
+          },
+          {
+            "test_id": "SMOKE_PG_007",
+            "execution_time_ms": 920,
+            "sheet_name": "SMOKE"
+          }
+        ],
+        "sheet_performance": {
+          "SMOKE": {
+            "total_time_ms": 28400,
+            "average_time_ms": 1136.0,
+            "test_count": 25
+          },
+          "DATAVALIDATIONS": {
+            "total_time_ms": 16800,
+            "average_time_ms": 1292.31,
+            "test_count": 13
+          }
+        }
+      }
+    }
+  ],
+  
+  "trends_metadata": {
+    "data_version": "2.0",
+    "last_updated": "2025-10-05T16:12:49",
+    "total_executions": 25,
+    "date_range": {
+      "earliest": "2025-09-15T08:30:00",
+      "latest": "2025-10-05T16:12:49",
+      "span_days": 20
+    },
+    "retention_policy": {
+      "keep_days": 365,
+      "auto_cleanup": true
+    },
+    "analysis_capabilities": [
+      "overall_trends",
+      "sheet_level_trends", 
+      "category_level_trends",
+      "individual_test_trends",
+      "performance_trends",
+      "time_based_aggregation"
+    ]
+  }
+}

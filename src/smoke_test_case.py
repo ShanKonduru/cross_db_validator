@@ -2,6 +2,7 @@ from random import choice, random
 import pandas as pd
 import sys
 import os
+import time
 
 # Add the project root to Python path
 project_root = os.path.dirname(os.path.dirname(__file__))
@@ -13,6 +14,7 @@ class SmokeTestCase:
     """
     Represents a single smoke test case loaded from an enabled row in the Excel sheet,
     with explicit attributes matching the DataFrame columns.
+    Enhanced with execution tracking for persistent trends analysis.
     """
 
     def __init__(self, **kwargs):
@@ -30,20 +32,30 @@ class SmokeTestCase:
         # 2. Parsing for Structured Data (Tags and Parameters)
         self.tags = self._parse_tags(kwargs.get("Tags"))
         self.parameters = self._parse_parameters(kwargs.get("Parameters"))
+        
+        # 3. Execution tracking for persistent trends
+        self._last_execution_status = None
+        self._execution_time_ms = 0
+        self._execution_start_time = None
 
     def execute_test(self) -> str:
         """
         Execute the smoke test based on the test category.
         Uses the database test framework to perform actual database operations.
+        Enhanced with execution time tracking.
         """
+        self._execution_start_time = time.time()
+        
         try:
             print(f"Executing test: {self.test_case_name} (Category: {self.test_category})")
             
             # Validate required parameters
             if not self.application_name or not self.environment_name:
+                self._record_execution_result("SKIPPED")
                 return "SKIPPED: Missing application or environment name"
             
             if not self.test_category:
+                self._record_execution_result("SKIPPED")
                 return "SKIPPED: Missing test category"
             
             # Create the appropriate test instance using the factory
@@ -63,18 +75,29 @@ class SmokeTestCase:
             # Parse the result to return standard status
             if result.startswith("PASSED"):
                 print(f"✅ {self.test_case_name}: {result}")
+                self._record_execution_result("PASSED")
                 return "PASSED"
             elif result.startswith("SKIPPED"):
                 print(f"⏭️  {self.test_case_name}: {result}")
+                self._record_execution_result("SKIPPED")
                 return "SKIPPED"
             else:  # FAILED
                 print(f"❌ {self.test_case_name}: {result}")
+                self._record_execution_result("FAILED")
                 return "FAILED"
                 
         except Exception as e:
             error_msg = f"FAILED: Unexpected error during test execution - {str(e)}"
             print(f"❌ {self.test_case_name}: {error_msg}")
+            self._record_execution_result("FAILED")
             return error_msg
+
+    def _record_execution_result(self, status: str):
+        """Record execution result and timing for persistent trends analysis."""
+        self._last_execution_status = status
+        if self._execution_start_time:
+            execution_time = time.time() - self._execution_start_time
+            self._execution_time_ms = int(execution_time * 1000)  # Convert to milliseconds
 
     def log_execution_status(self, execution_status):
         """Logs the execution status of the test case."""

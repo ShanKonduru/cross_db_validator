@@ -1,11 +1,13 @@
 import random
 import pandas as pd
+import time
 
 
 class DataValidationTestCase:
     """
     Represents a single data validation test case loaded from an enabled row in the Excel sheet,
     with explicit attributes matching the DataFrame columns.
+    Enhanced with execution tracking for persistent trends analysis.
     """
 
     def __init__(self, **kwargs):
@@ -23,11 +25,34 @@ class DataValidationTestCase:
         # 2. Parsing for Structured Data (Tags and Parameters)
         self.tags = self._parse_tags(kwargs.get("Tags"))
         self.parameters = self._parse_parameters(kwargs.get("Parameters"))
+        
+        # 3. Execution tracking for persistent trends
+        self._last_execution_status = None
+        self._execution_time_ms = 0
+        self._execution_start_time = None
 
     def execute_test(self) -> str:
+        """
+        Execute the data validation test.
+        Enhanced with execution time tracking.
+        """
+        self._execution_start_time = time.time()
+        
         # Simulate test execution logic
         print(f"Executing test: {self.test_case_name}")
-        return random.choice(["PASSED", "FAILED", "SKIPPED"])
+        result = random.choice(["PASSED", "FAILED", "SKIPPED"])
+        
+        # Record execution result
+        self._record_execution_result(result)
+        
+        return result
+
+    def _record_execution_result(self, status: str):
+        """Record execution result and timing for persistent trends analysis."""
+        self._last_execution_status = status
+        if self._execution_start_time:
+            execution_time = time.time() - self._execution_start_time
+            self._execution_time_ms = int(execution_time * 1000)  # Convert to milliseconds
 
     def log_execution_status(self, execution_status):
         """Logs the execution status of the test case."""
