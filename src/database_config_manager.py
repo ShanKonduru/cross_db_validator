@@ -1,6 +1,7 @@
 import json
 import os
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Tuple
+from dotenv import load_dotenv
 
 class DatabaseConfigManager:
     """
@@ -108,3 +109,45 @@ class DatabaseConfigManager:
             print(f"Updated: [{environment_key}][{application_key}][{key}] set to '{value}' (in memory)")
             return True
         return False
+
+    @staticmethod
+    def get_credentials(environment_name: str, application_name: str) -> Tuple[Optional[str], Optional[str]]:
+        """
+        Static method to retrieve username and password from environment variables
+        based on environment and application names.
+
+        Args:
+            environment_name: The environment name (e.g., "DEV", "QA", "ACC", "NP1", "PRE_PROD").
+            application_name: The application name (e.g., "RED", "MREE", "SADB", "TPS", "MDW", "DUMMY").
+
+        Returns:
+            A tuple containing (username, password). Returns (None, None) if credentials not found.
+
+        Example:
+            username, password = DatabaseConfigManager.get_credentials("DEV", "DUMMY")
+            if username and password:
+                print(f"Username: {username}, Password: {password}")
+            else:
+                print("Credentials not found")
+        """
+        # Load environment variables from .env file
+        load_dotenv()
+        
+        # Normalize input to uppercase for consistency
+        env_name = environment_name.upper()
+        app_name = application_name.upper()
+        
+        # Construct environment variable names based on the pattern
+        username_env_var = f"{env_name}_{app_name}_USERNAME"
+        password_env_var = f"{env_name}_{app_name}_PASSWORD"
+        
+        # Retrieve values from environment variables
+        username = os.getenv(username_env_var)
+        password = os.getenv(password_env_var)
+        
+        if username is None or password is None:
+            print(f"Warning: Credentials not found for {env_name}/{app_name}")
+            print(f"Expected environment variables: {username_env_var}, {password_env_var}")
+            return None, None
+        
+        return username, password

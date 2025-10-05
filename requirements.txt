@@ -1,5 +1,5 @@
 # List your project dependencies here
-dotenv
+python-dotenv
 pytest
 pytest-html
 pytest-cov
