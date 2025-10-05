@@ -98,7 +98,7 @@ class ExcelTestCaseReader:
                 # df_test_cases.dropna(how='all', inplace=True)
 
                 self.test_case_data[sheet_name] = df_test_cases
-                print(f"   - Successfully read data from '{sheet_name}'")
+                # print(f"   - Successfully read data from '{sheet_name}'")
 
             except Exception as e:
                 print(f"   - ❌ Failed to read data from sheet '{sheet_name}': {e}")

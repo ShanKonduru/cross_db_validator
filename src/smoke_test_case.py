@@ -23,10 +23,10 @@ class SmokeTestCase:
         self.tags = self._parse_tags(kwargs.get("Tags"))
         self.parameters = self._parse_parameters(kwargs.get("Parameters"))
 
-    def execute_test(self) -> bool:
+    def execute_test(self) -> str:
         # Simulate test execution logic
         print(f"Executing test: {self.test_case_name}")
-        return choice([True, False])
+        return choice(["PASSED", "FAILED"])
 
     def log_execution_status(self, execution_status):
         """Logs the execution status of the test case."""
