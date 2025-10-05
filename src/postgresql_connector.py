@@ -33,8 +33,13 @@ class PostgreSQLConnector(DatabaseConnectionBase):
     def disconnect(self) -> None:
         """Disconnect from PostgreSQL"""
         if self.connection:
-            self.connection.close()
-            self.is_connected = False
+            try:
+                self.connection.close()
+            except Exception:
+                pass  # Ignore close errors
+            finally:
+                self.connection = None
+                self.is_connected = False
     
     def execute_query(self, query: str) -> Tuple[bool, Any]:
         """Execute PostgreSQL query"""
@@ -42,13 +47,12 @@ class PostgreSQLConnector(DatabaseConnectionBase):
             return False, "Not connected to database"
         
         try:
-            cursor = self.connection.cursor()
-            cursor.execute(query)
-            result = cursor.fetchall()
-            cursor.close()
-            return True, result
+            with self.connection.cursor() as cursor:
+                cursor.execute(query)
+                result = cursor.fetchall()
+                return True, result
         except Exception as e:
-            return False, str(e)
+            return False, f"Error executing query: {str(e)}"
     
     def get_tables(self) -> List[str]:
         """Get PostgreSQL table names"""
@@ -64,7 +68,9 @@ class PostgreSQLConnector(DatabaseConnectionBase):
         success, result = self.execute_query(
             f"SELECT COUNT(*) FROM information_schema.tables WHERE table_name = '{table_name}'"
         )
-        return success and result and result[0][0] > 0
+        if success and result and len(result) > 0:
+            return result[0][0] > 0
+        return False
     
     def get_row_count(self, table_name: str) -> int:
         """Get row count for PostgreSQL table"""

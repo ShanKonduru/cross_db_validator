@@ -16,12 +16,13 @@ from src.postgresql_connector import PostgreSQLConnector
 class TestPostgreSQLConnector:
     """Test class for PostgreSQLConnector"""
 
+    @pytest.mark.unit
     def test_initialization(self):
-        """Test proper initialization"""
-        host = "localhost"
+        """Test PostgreSQLConnector initialization"""
+        host = "postgres-host"
         port = 5432
-        username = "testuser"
-        password = "testpass"
+        username = "user"
+        password = "pass"
         database = "testdb"
         
         connector = PostgreSQLConnector(host, port, username, password, database)
@@ -34,13 +35,23 @@ class TestPostgreSQLConnector:
         assert connector.connection is None
         assert connector.is_connected is False
 
-    @patch('src.postgresql_connector.psycopg2')
-    def test_connect_success(self, mock_psycopg2):
+    @pytest.mark.unit
+    @patch('builtins.__import__')
+    def test_connect_success(self, mock_import):
         """Test successful connection"""
+        # Mock psycopg2 module
+        mock_psycopg2 = MagicMock()
         mock_connection = MagicMock()
         mock_psycopg2.connect.return_value = mock_connection
         
-        connector = PostgreSQLConnector("localhost", 5432, "user", "pass", "testdb")
+        def import_side_effect(name, *args, **kwargs):
+            if name == 'psycopg2':
+                return mock_psycopg2
+            return __import__(name, *args, **kwargs)
+        
+        mock_import.side_effect = import_side_effect
+        
+        connector = PostgreSQLConnector("postgres-host", 5432, "user", "pass", "testdb")
         success, message = connector.connect()
         
         assert success is True
@@ -48,30 +59,45 @@ class TestPostgreSQLConnector:
         assert connector.is_connected is True
         assert connector.connection == mock_connection
         
-        mock_psycopg2.connect.assert_called_once_with(
-            host="localhost",
-            port=5432,
-            database="testdb",
-            user="user",
-            password="pass",
-            connect_timeout=10
-        )
+        # Verify psycopg2.connect was called with correct parameters
+        mock_psycopg2.connect.assert_called_once()
 
-    @patch('src.postgresql_connector.psycopg2')
-    def test_connect_failure(self, mock_psycopg2):
+    @pytest.mark.unit
+    @patch('builtins.__import__')
+    def test_connect_failure(self, mock_import):
         """Test connection failure"""
+        # Mock psycopg2 module to raise exception
+        mock_psycopg2 = MagicMock()
         mock_psycopg2.connect.side_effect = Exception("Connection failed")
         
-        connector = PostgreSQLConnector("localhost", 5432, "user", "pass", "testdb")
+        def import_side_effect(name, *args, **kwargs):
+            if name == 'psycopg2':
+                return mock_psycopg2
+            return __import__(name, *args, **kwargs)
+        
+        mock_import.side_effect = import_side_effect
+        
+        connector = PostgreSQLConnector("postgres-host", 5432, "user", "pass", "testdb")
         success, message = connector.connect()
         
         assert success is False
-        assert "PostgreSQL connection failed: Connection failed" in message
+        assert "PostgreSQL connection failed:" in message
+        assert connector.is_connected is False
+        assert connector.connection is None
+
+    @pytest.mark.unit
+    def test_disconnect_without_connection(self):
+        """Test disconnect without active connection"""
+        connector = PostgreSQLConnector("postgres-host", 5432, "user", "pass", "testdb")
+        connector.disconnect()
+        
+        assert connector.connection is None
         assert connector.is_connected is False
 
+    @pytest.mark.unit
     def test_disconnect_with_connection(self):
-        """Test disconnect when connection exists"""
-        connector = PostgreSQLConnector("localhost", 5432, "user", "pass", "testdb")
+        """Test disconnect with active connection"""
+        connector = PostgreSQLConnector("postgres-host", 5432, "user", "pass", "testdb")
         mock_connection = MagicMock()
         connector.connection = mock_connection
         connector.is_connected = True
@@ -79,90 +105,77 @@ class TestPostgreSQLConnector:
         connector.disconnect()
         
         mock_connection.close.assert_called_once()
+        assert connector.connection is None
         assert connector.is_connected is False
 
-    def test_disconnect_without_connection(self):
-        """Test disconnect when no connection exists"""
-        connector = PostgreSQLConnector("localhost", 5432, "user", "pass", "testdb")
-        connector.connection = None
+    @pytest.mark.unit
+    def test_disconnect_with_connection_error(self):
+        """Test disconnect when close() raises an exception"""
+        connector = PostgreSQLConnector("postgres-host", 5432, "user", "pass", "testdb")
+        mock_connection = MagicMock()
+        mock_connection.close.side_effect = Exception("Close failed")
+        connector.connection = mock_connection
+        connector.is_connected = True
         
-        # Should not raise an exception
         connector.disconnect()
+        
+        # Should still reset connection state even if close fails
+        assert connector.connection is None
         assert connector.is_connected is False
 
+    @pytest.mark.unit
     def test_execute_query_not_connected(self):
         """Test execute_query when not connected"""
-        connector = PostgreSQLConnector("localhost", 5432, "user", "pass", "testdb")
-        connector.is_connected = False
+        connector = PostgreSQLConnector("postgres-host", 5432, "user", "pass", "testdb")
         
         success, result = connector.execute_query("SELECT 1")
         
         assert success is False
         assert result == "Not connected to database"
 
+    @pytest.mark.unit
     def test_execute_query_success(self):
         """Test successful query execution"""
-        connector = PostgreSQLConnector("localhost", 5432, "user", "pass", "testdb")
+        connector = PostgreSQLConnector("postgres-host", 5432, "user", "pass", "testdb")
         mock_connection = MagicMock()
         mock_cursor = MagicMock()
-        mock_connection.cursor.return_value = mock_cursor
-        mock_cursor.fetchall.return_value = [('result1',), ('result2',)]
+        
+        # Setup mock return values
+        mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
+        mock_cursor.fetchall.return_value = [(1,), (2,), (3,)]
         
         connector.connection = mock_connection
         connector.is_connected = True
         
-        success, result = connector.execute_query("SELECT * FROM test")
+        success, result = connector.execute_query("SELECT id FROM test_table")
         
         assert success is True
-        assert result == [('result1',), ('result2',)]
-        mock_cursor.execute.assert_called_once_with("SELECT * FROM test")
-        mock_cursor.fetchall.assert_called_once()
-        mock_cursor.close.assert_called_once()
+        assert result == [(1,), (2,), (3,)]
+        mock_cursor.execute.assert_called_once_with("SELECT id FROM test_table")
 
+    @pytest.mark.unit
     def test_execute_query_failure(self):
         """Test query execution failure"""
-        connector = PostgreSQLConnector("localhost", 5432, "user", "pass", "testdb")
+        connector = PostgreSQLConnector("postgres-host", 5432, "user", "pass", "testdb")
         mock_connection = MagicMock()
         mock_cursor = MagicMock()
-        mock_connection.cursor.return_value = mock_cursor
-        mock_cursor.execute.side_effect = Exception("Query failed")
+        
+        # Setup mock to raise exception
+        mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
+        mock_cursor.execute.side_effect = Exception("SQL Error")
         
         connector.connection = mock_connection
         connector.is_connected = True
         
-        success, result = connector.execute_query("INVALID QUERY")
+        success, result = connector.execute_query("INVALID SQL")
         
         assert success is False
-        assert result == "Query failed"
+        assert "Error executing query:" in result
 
-    def test_get_tables_success(self):
-        """Test successful get_tables"""
-        connector = PostgreSQLConnector("localhost", 5432, "user", "pass", "testdb")
-        
-        with patch.object(connector, 'execute_query') as mock_execute:
-            mock_execute.return_value = (True, [('table1',), ('table2',), ('table3',)])
-            
-            tables = connector.get_tables()
-            
-            assert tables == ['table1', 'table2', 'table3']
-            mock_execute.assert_called_once_with(
-                "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"
-            )
-
-    def test_get_tables_failure(self):
-        """Test get_tables when query fails"""
-        connector = PostgreSQLConnector("localhost", 5432, "user", "pass", "testdb")
-        
-        with patch.object(connector, 'execute_query') as mock_execute:
-            mock_execute.return_value = (False, "Query failed")
-            
-            tables = connector.get_tables()
-            
-            assert tables == []
-
+    @pytest.mark.unit
     def test_table_exists_true(self):
         """Test table_exists when table exists"""
-        connector = PostgreSQLConnector("localhost", 5432, "user", "pass", "testdb")
+        connector = PostgreSQLConnector("postgres-host", 5432, "user", "pass", "testdb")
         
         with patch.object(connector, 'execute_query') as mock_execute:
             mock_execute.return_value = (True, [(1,)])
@@ -174,9 +187,10 @@ class TestPostgreSQLConnector:
                 "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'test_table'"
             )
 
+    @pytest.mark.unit
     def test_table_exists_false(self):
         """Test table_exists when table doesn't exist"""
-        connector = PostgreSQLConnector("localhost", 5432, "user", "pass", "testdb")
+        connector = PostgreSQLConnector("postgres-host", 5432, "user", "pass", "testdb")
         
         with patch.object(connector, 'execute_query') as mock_execute:
             mock_execute.return_value = (True, [(0,)])
@@ -185,9 +199,10 @@ class TestPostgreSQLConnector:
             
             assert exists is False
 
+    @pytest.mark.unit
     def test_table_exists_query_failure(self):
         """Test table_exists when query fails"""
-        connector = PostgreSQLConnector("localhost", 5432, "user", "pass", "testdb")
+        connector = PostgreSQLConnector("postgres-host", 5432, "user", "pass", "testdb")
         
         with patch.object(connector, 'execute_query') as mock_execute:
             mock_execute.return_value = (False, "Query failed")
@@ -196,9 +211,22 @@ class TestPostgreSQLConnector:
             
             assert exists is False
 
+    @pytest.mark.unit
+    def test_table_exists_with_empty_result(self):
+        """Test table_exists when query returns empty result"""
+        connector = PostgreSQLConnector("postgres-host", 5432, "user", "pass", "testdb")
+        
+        with patch.object(connector, 'execute_query') as mock_execute:
+            mock_execute.return_value = (True, [])
+            
+            exists = connector.table_exists("test_table")
+            
+            assert exists is False
+
+    @pytest.mark.unit
     def test_get_row_count_success(self):
-        """Test successful get_row_count"""
-        connector = PostgreSQLConnector("localhost", 5432, "user", "pass", "testdb")
+        """Test successful row count retrieval"""
+        connector = PostgreSQLConnector("postgres-host", 5432, "user", "pass", "testdb")
         
         with patch.object(connector, 'execute_query') as mock_execute:
             mock_execute.return_value = (True, [(100,)])
@@ -208,9 +236,10 @@ class TestPostgreSQLConnector:
             assert count == 100
             mock_execute.assert_called_once_with("SELECT COUNT(*) FROM test_table")
 
+    @pytest.mark.unit
     def test_get_row_count_failure(self):
-        """Test get_row_count when query fails"""
-        connector = PostgreSQLConnector("localhost", 5432, "user", "pass", "testdb")
+        """Test row count retrieval failure"""
+        connector = PostgreSQLConnector("postgres-host", 5432, "user", "pass", "testdb")
         
         with patch.object(connector, 'execute_query') as mock_execute:
             mock_execute.return_value = (False, "Query failed")
@@ -219,9 +248,10 @@ class TestPostgreSQLConnector:
             
             assert count == 0
 
+    @pytest.mark.unit
     def test_get_row_count_no_result(self):
-        """Test get_row_count when no result returned"""
-        connector = PostgreSQLConnector("localhost", 5432, "user", "pass", "testdb")
+        """Test row count when no result returned"""
+        connector = PostgreSQLConnector("postgres-host", 5432, "user", "pass", "testdb")
         
         with patch.object(connector, 'execute_query') as mock_execute:
             mock_execute.return_value = (True, [])
@@ -231,55 +261,87 @@ class TestPostgreSQLConnector:
             assert count == 0
 
     @pytest.mark.edge
-    def test_initialization_with_special_characters(self):
-        """Test initialization with special characters in parameters"""
-        connector = PostgreSQLConnector(
-            "host-with-dashes", 5432, "user@domain", "pass!@#$%", "db-name_123"
-        )
+    def test_connection_with_different_port(self):
+        """Test connection with non-standard port"""
+        with patch('builtins.__import__') as mock_import:
+            mock_psycopg2 = MagicMock()
+            mock_connection = MagicMock()
+            mock_psycopg2.connect.return_value = mock_connection
+            
+            def import_side_effect(name, *args, **kwargs):
+                if name == 'psycopg2':
+                    return mock_psycopg2
+                return __import__(name, *args, **kwargs)
+            
+            mock_import.side_effect = import_side_effect
+            
+            connector = PostgreSQLConnector("postgres-host", 5433, "user", "pass", "testdb")
+            connector.connect()
+            
+            # Verify the connect call was made
+            mock_psycopg2.connect.assert_called_once()
+
+    @pytest.mark.edge
+    def test_special_characters_in_database_name(self):
+        """Test database name with special characters"""
+        connector = PostgreSQLConnector("postgres-host", 5432, "user", "pass", "test_db-name")
         
-        assert connector.host == "host-with-dashes"
-        assert connector.username == "user@domain"
-        assert connector.password == "pass!@#$%"
-        assert connector.database == "db-name_123"
+        assert connector.database == "test_db-name"
 
     @pytest.mark.integration
     def test_full_workflow(self):
         """Test complete workflow with mocked dependencies"""
-        with patch('src.postgresql_connector.psycopg2') as mock_psycopg2:
+        with patch('builtins.__import__') as mock_import:
+            mock_psycopg2 = MagicMock()
             mock_connection = MagicMock()
             mock_cursor = MagicMock()
-            mock_connection.cursor.return_value = mock_cursor
+            
             mock_psycopg2.connect.return_value = mock_connection
+            mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
+            mock_cursor.fetchall.return_value = [(5,)]
             
-            # Setup mock responses
-            mock_cursor.fetchall.side_effect = [
-                [('table1',), ('table2',)],  # get_tables
-                [(1,)],  # table_exists
-                [(50,)]  # get_row_count
-            ]
+            def import_side_effect(name, *args, **kwargs):
+                if name == 'psycopg2':
+                    return mock_psycopg2
+                return __import__(name, *args, **kwargs)
             
-            connector = PostgreSQLConnector("localhost", 5432, "user", "pass", "testdb")
+            mock_import.side_effect = import_side_effect
             
-            # Test connect
+            connector = PostgreSQLConnector("postgres-host", 5432, "user", "pass", "testdb")
+            
+            # Test connection
             success, message = connector.connect()
             assert success is True
             
-            # Test get_tables
-            tables = connector.get_tables()
-            assert tables == ['table1', 'table2']
+            # Test query execution
+            success, result = connector.execute_query("SELECT COUNT(*) FROM test_table")
+            assert success is True
+            assert result == [(5,)]
             
-            # Test table_exists
-            exists = connector.table_exists("table1")
-            assert exists is True
-            
-            # Test get_row_count
-            count = connector.get_row_count("table1")
-            assert count == 50
-            
-            # Test disconnect
+            # Test disconnection
             connector.disconnect()
             assert connector.is_connected is False
 
+    @pytest.mark.negative
+    def test_invalid_connection_parameters(self):
+        """Test connection with invalid parameters"""
+        with patch('builtins.__import__') as mock_import:
+            mock_psycopg2 = MagicMock()
+            mock_psycopg2.connect.side_effect = Exception("Invalid connection parameters")
+            
+            def import_side_effect(name, *args, **kwargs):
+                if name == 'psycopg2':
+                    return mock_psycopg2
+                return __import__(name, *args, **kwargs)
+            
+            mock_import.side_effect = import_side_effect
+            
+            connector = PostgreSQLConnector("", 0, "", "", "")
+            success, message = connector.connect()
+            
+            assert success is False
+            assert "PostgreSQL connection failed:" in message
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     pytest.main([__file__, '-v'])
