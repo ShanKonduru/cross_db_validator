@@ -3,7 +3,7 @@ PostgreSQL Database Connector
 Implementation of DatabaseConnectionBase for PostgreSQL databases
 """
 from typing import List, Any, Tuple
-from .database_connection_base import DatabaseConnectionBase
+from src.database_connection_base import DatabaseConnectionBase
 
 
 class PostgreSQLConnector(DatabaseConnectionBase):
@@ -64,13 +64,35 @@ class PostgreSQLConnector(DatabaseConnectionBase):
         return []
     
     def table_exists(self, table_name: str) -> bool:
-        """Check if table exists in PostgreSQL"""
-        success, result = self.execute_query(
-            f"SELECT COUNT(*) FROM information_schema.tables WHERE table_name = '{table_name}'"
-        )
-        if success and result and len(result) > 0:
-            return result[0][0] > 0
-        return False
+        """Check if table exists in PostgreSQL - handles schema-qualified names"""
+        try:
+            # Handle schema-qualified table names (e.g., 'public.products')
+            if '.' in table_name:
+                schema_name, table_only = table_name.split('.', 1)
+                # Remove quotes if present and sanitize
+                schema_name = schema_name.strip('\'"').replace("'", "''")
+                table_only = table_only.strip('\'"').replace("'", "''")
+                
+                query = f"""
+                SELECT COUNT(*) FROM information_schema.tables 
+                WHERE table_schema = '{schema_name}' AND table_name = '{table_only}'
+                """
+            else:
+                # No schema specified, check current schema
+                # Sanitize table name
+                table_name_clean = table_name.replace("'", "''")
+                query = f"""
+                SELECT COUNT(*) FROM information_schema.tables 
+                WHERE table_name = '{table_name_clean}' AND table_schema = current_schema()
+                """
+            
+            success, result = self.execute_query(query)
+            if success and result and len(result) > 0:
+                return result[0][0] > 0
+            return False
+        except Exception as e:
+            print(f"Error checking table existence: {e}")
+            return False
     
     def get_row_count(self, table_name: str) -> int:
         """Get row count for PostgreSQL table"""

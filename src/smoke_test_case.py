@@ -1,5 +1,13 @@
 from random import choice, random
 import pandas as pd
+import sys
+import os
+
+# Add the project root to Python path
+project_root = os.path.dirname(os.path.dirname(__file__))
+sys.path.insert(0, project_root)
+
+from src.database_test_framework import DatabaseTestFactory
 
 class SmokeTestCase:
     """
@@ -24,13 +32,64 @@ class SmokeTestCase:
         self.parameters = self._parse_parameters(kwargs.get("Parameters"))
 
     def execute_test(self) -> str:
-        # Simulate test execution logic
-        print(f"Executing test: {self.test_case_name}")
-        return choice(["PASSED", "FAILED", "SKIPPED"])
+        """
+        Execute the smoke test based on the test category.
+        Uses the database test framework to perform actual database operations.
+        """
+        try:
+            print(f"Executing test: {self.test_case_name} (Category: {self.test_category})")
+            
+            # Validate required parameters
+            if not self.application_name or not self.environment_name:
+                return "SKIPPED: Missing application or environment name"
+            
+            if not self.test_category:
+                return "SKIPPED: Missing test category"
+            
+            # Create the appropriate test instance using the factory
+            test_instance = DatabaseTestFactory.create_test(
+                test_category=self.test_category,
+                environment=self.environment_name,
+                application=self.application_name,
+                parameters=self.parameters
+            )
+            
+            if not test_instance:
+                return f"SKIPPED: Unsupported test category '{self.test_category}'"
+            
+            # Execute the test
+            result = test_instance.execute()
+            
+            # Parse the result to return standard status
+            if result.startswith("PASSED"):
+                print(f"✅ {self.test_case_name}: {result}")
+                return "PASSED"
+            elif result.startswith("SKIPPED"):
+                print(f"⏭️  {self.test_case_name}: {result}")
+                return "SKIPPED"
+            else:  # FAILED
+                print(f"❌ {self.test_case_name}: {result}")
+                return "FAILED"
+                
+        except Exception as e:
+            error_msg = f"FAILED: Unexpected error during test execution - {str(e)}"
+            print(f"❌ {self.test_case_name}: {error_msg}")
+            return error_msg
 
     def log_execution_status(self, execution_status):
         """Logs the execution status of the test case."""
-        self.status = "PASSED" if execution_status else "FAILED"
+        # Handle the case where execution_status is a string (new implementation)
+        if isinstance(execution_status, str):
+            if execution_status.upper().startswith("PASSED"):
+                self.status = "PASSED"
+            elif execution_status.upper().startswith("SKIPPED"):
+                self.status = "SKIPPED"
+            else:
+                self.status = "FAILED"
+        else:
+            # Legacy boolean handling
+            self.status = "PASSED" if execution_status else "FAILED"
+        
         print(f"Test Case '{self.test_case_name}' Execution Status: {self.status}")
 
     def _parse_tags(self, tags_str):

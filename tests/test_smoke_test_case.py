@@ -204,43 +204,60 @@ class TestSmokeTestCase:
         
         assert test_case.parameters == {}
 
-    @patch('src.smoke_test_case.choice')
-    def test_execute_test_returns_passed(self, mock_choice):
+    @patch('src.database_test_framework.DatabaseTestFactory.create_test')
+    def test_execute_test_returns_passed(self, mock_create_test):
         """Test execute_test returning PASSED"""
-        mock_choice.return_value = "PASSED"
+        # Mock the test instance and its execute method
+        mock_test_instance = MagicMock()
+        mock_test_instance.execute.return_value = "PASSED"
+        mock_create_test.return_value = mock_test_instance
         
         test_case = SmokeTestCase(
             Test_Case_ID="SMOKE_014",
-            Test_Case_Name="Test Execute"
+            Test_Case_Name="Test Execute",
+            Test_Category="SETUP",
+            Application_Name="TEST_APP",
+            Environment_Name="DEV"
         )
         
-        with patch('builtins.print') as mock_print:
+        with patch('builtins.print'):
             result = test_case.execute_test()
         
         assert result == "PASSED"
-        mock_print.assert_called_with("Executing test: Test Execute")
 
-    @patch('src.smoke_test_case.choice')
-    def test_execute_test_returns_failed(self, mock_choice):
+    @patch('src.database_test_framework.DatabaseTestFactory.create_test')
+    def test_execute_test_returns_failed(self, mock_create_test):
         """Test execute_test returning FAILED"""
-        mock_choice.return_value = "FAILED"
+        # Mock the test instance and its execute method
+        mock_test_instance = MagicMock()
+        mock_test_instance.execute.return_value = "FAILED: Test error"
+        mock_create_test.return_value = mock_test_instance
         
         test_case = SmokeTestCase(
             Test_Case_ID="SMOKE_015",
-            Test_Case_Name="Test Execute Failed"
+            Test_Case_Name="Test Execute Failed",
+            Test_Category="CONNECTION",
+            Application_Name="TEST_APP",
+            Environment_Name="DEV"
         )
         
         result = test_case.execute_test()
         assert result == "FAILED"
 
-    @patch('src.smoke_test_case.choice')
-    def test_execute_test_returns_skipped(self, mock_choice):
+    @patch('src.database_test_framework.DatabaseTestFactory.create_test')
+    def test_execute_test_returns_skipped(self, mock_create_test):
         """Test execute_test returning SKIPPED"""
-        mock_choice.return_value = "SKIPPED"
+        # Mock the test instance and its execute method
+        mock_test_instance = MagicMock()
+        mock_test_instance.execute.return_value = "SKIPPED: Test skipped"
+        mock_create_test.return_value = mock_test_instance
         
         test_case = SmokeTestCase(
             Test_Case_ID="SMOKE_016",
-            Test_Case_Name="Test Execute Skipped"
+            Test_Case_Name="Test Execute Skipped",
+            Test_Category="QUERIES",
+            Application_Name="TEST_APP",
+            Environment_Name="DEV"
         )
         
         result = test_case.execute_test()

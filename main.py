@@ -59,9 +59,11 @@ def main():
                     execution_status = test_case_obj.execute_test()
                     report.add_heading(f"Status: {execution_status }", level=4)
                     test_case_obj.log_execution_status(execution_status)
-                    if execution_status.lower() == "passed":
+                    
+                    # Count the actual result
+                    if execution_status.upper().startswith("PASSED"):
                         passed_test_cases += 1
-                    elif execution_status.lower() == "skipped":
+                    elif execution_status.upper().startswith("SKIPPED"):
                         skipped_test_cases += 1
                     else:
                         failed_test_cases += 1
@@ -77,9 +79,11 @@ def main():
                     execution_status = test_case_obj.execute_test()
                     report.add_heading(f"Status: {execution_status }", level=4)
                     test_case_obj.log_execution_status(execution_status)
-                    if execution_status.lower() == "passed":
+                    
+                    # Count the actual result
+                    if execution_status.upper().startswith("PASSED"):
                         passed_test_cases += 1
-                    elif execution_status.lower() == "skipped":
+                    elif execution_status.upper().startswith("SKIPPED"):
                         skipped_test_cases += 1
                     else:
                         failed_test_cases += 1

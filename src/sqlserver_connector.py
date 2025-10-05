@@ -3,7 +3,7 @@ SQL Server Database Connector
 Implementation of DatabaseConnectionBase for SQL Server databases
 """
 from typing import List, Any, Tuple
-from .database_connection_base import DatabaseConnectionBase
+from src.database_connection_base import DatabaseConnectionBase
 
 
 class SQLServerConnector(DatabaseConnectionBase):

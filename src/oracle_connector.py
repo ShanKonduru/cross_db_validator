@@ -3,7 +3,7 @@ Oracle Database Connector
 Implementation of DatabaseConnectionBase for Oracle databases
 """
 from typing import List, Any, Tuple
-from .database_connection_base import DatabaseConnectionBase
+from src.database_connection_base import DatabaseConnectionBase
 
 
 class OracleConnector(DatabaseConnectionBase):
