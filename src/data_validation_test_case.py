@@ -27,7 +27,7 @@ class DataValidationTestCase:
     def execute_test(self) -> str:
         # Simulate test execution logic
         print(f"Executing test: {self.test_case_name}")
-        return random.choice(["PASSED", "FAILED"])
+        return random.choice(["PASSED", "FAILED", "SKIPPED"])
 
     def log_execution_status(self, execution_status):
         """Logs the execution status of the test case."""

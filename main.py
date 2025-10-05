@@ -14,6 +14,7 @@ def main():
     total_test_cases = 0
     passed_test_cases = 0
     failed_test_cases = 0
+    skipped_test_cases = 0
     
     # 1. Instantiate the generator
     report = MarkdownReportGenerator(
@@ -60,6 +61,8 @@ def main():
                     test_case_obj.log_execution_status(execution_status)
                     if execution_status.lower() == "passed":
                         passed_test_cases += 1
+                    elif execution_status.lower() == "skipped":
+                        skipped_test_cases += 1
                     else:
                         failed_test_cases += 1
                     data_validation_test_objects.append(test_case_obj)
@@ -76,6 +79,8 @@ def main():
                     test_case_obj.log_execution_status(execution_status)
                     if execution_status.lower() == "passed":
                         passed_test_cases += 1
+                    elif execution_status.lower() == "skipped":
+                        skipped_test_cases += 1
                     else:
                         failed_test_cases += 1
                     smoke_test_objects.append(test_case_obj)
@@ -88,9 +93,10 @@ def main():
     report.add_paragraph(f"Total Test Cases: {total_test_cases}")
     report.add_paragraph(f"Passed Test Cases: {passed_test_cases} pass rate: {passed_test_cases / total_test_cases * 100 if total_test_cases > 0 else 0:.2f}%")
     report.add_paragraph(f"Failed Test Cases: {failed_test_cases} fail rate: {failed_test_cases / total_test_cases * 100 if total_test_cases > 0 else 0:.2f}%")
+    report.add_paragraph(f"Skipped Test Cases: {skipped_test_cases} skip rate: {skipped_test_cases / total_test_cases * 100 if total_test_cases > 0 else 0:.2f}%")  
 
     report.save()
-
+    print("Test report saved successfully.")
 
 if __name__ == "__main__":
     main()
