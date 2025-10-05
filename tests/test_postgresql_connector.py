@@ -183,9 +183,12 @@ class TestPostgreSQLConnector:
             exists = connector.table_exists("test_table")
             
             assert exists is True
-            mock_execute.assert_called_once_with(
-                "SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'test_table'"
-            )
+            # Updated to match the new query format for non-schema-qualified table names
+            expected_query = """
+                SELECT COUNT(*) FROM information_schema.tables 
+                WHERE table_name = 'test_table' AND table_schema = current_schema()
+                """
+            mock_execute.assert_called_once_with(expected_query)
 
     @pytest.mark.unit
     def test_table_exists_false(self):
@@ -198,6 +201,30 @@ class TestPostgreSQLConnector:
             exists = connector.table_exists("nonexistent_table")
             
             assert exists is False
+            # Should use the same query format as the true test
+            expected_query = """
+                SELECT COUNT(*) FROM information_schema.tables 
+                WHERE table_name = 'nonexistent_table' AND table_schema = current_schema()
+                """
+            mock_execute.assert_called_once_with(expected_query)
+    
+    @pytest.mark.unit
+    def test_table_exists_with_schema_qualified_name(self):
+        """Test table_exists with schema-qualified table name"""
+        connector = PostgreSQLConnector("postgres-host", 5432, "user", "pass", "testdb")
+        
+        with patch.object(connector, 'execute_query') as mock_execute:
+            mock_execute.return_value = (True, [(1,)])
+            
+            exists = connector.table_exists("public.test_table")
+            
+            assert exists is True
+            # Should use schema-qualified query format
+            expected_query = """
+                SELECT COUNT(*) FROM information_schema.tables 
+                WHERE table_schema = 'public' AND table_name = 'test_table'
+                """
+            mock_execute.assert_called_once_with(expected_query)
 
     @pytest.mark.unit
     def test_table_exists_query_failure(self):
