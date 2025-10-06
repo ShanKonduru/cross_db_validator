@@ -132,10 +132,6 @@ class ExecutionDataPersistence:
                 "latest": max(execution_times).isoformat(),
                 "span_days": (max(execution_times) - min(execution_times)).days
             },
-            "retention_policy": {
-                "keep_days": 365,
-                "auto_cleanup": True
-            },
             "analysis_capabilities": [
                 "overall_trends", "sheet_level_trends", "category_level_trends", 
                 "individual_test_trends", "performance_trends", "time_based_aggregation"

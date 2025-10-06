@@ -234,10 +234,6 @@
       "latest": "2025-10-05T16:12:49",
       "span_days": 20
     },
-    "retention_policy": {
-      "keep_days": 365,
-      "auto_cleanup": true
-    },
     "analysis_capabilities": [
       "overall_trends",
       "sheet_level_trends", 
