@@ -53,7 +53,7 @@ class HTMLReportGenerator:
             self.summary_stats['passed'] += 1
         elif status.upper() == 'FAILED':
             self.summary_stats['failed'] += 1
-        elif status.upper() == 'SKIPPED':
+        elif status.upper().startswith('SKIPPED'):
             self.summary_stats['skipped'] += 1
 
         # Group by sheet
@@ -123,7 +123,7 @@ class HTMLReportGenerator:
                 details_html += f'<div class="text-danger small">{test["error_message"]}</div>'
         
         # Handle SKIPPED tests
-        elif test['status'] == 'SKIPPED':
+        elif test['status'].upper().startswith('SKIPPED'):
             details_html = '<span class="text-muted small">Test was skipped</span>'
         
         # Default for PASSED without issues
@@ -150,7 +150,7 @@ class HTMLReportGenerator:
             category = result['category'] or 'Unknown'
             if category not in category_stats:
                 category_stats[category] = {'passed': 0, 'failed': 0, 'skipped': 0}
-            category_stats[category][result['status'].lower()] += 1
+            category_stats[category][result['status'].split(':')[0].lower()] += 1
 
         category_chart_data = {
             'labels': list(category_stats.keys()),
@@ -316,7 +316,7 @@ class HTMLReportGenerator:
         for sheet_name, tests in self.sheets_data.items():
             sheet_passed = sum(1 for test in tests if test['status'] == 'PASSED')
             sheet_failed = sum(1 for test in tests if test['status'] == 'FAILED')
-            sheet_skipped = sum(1 for test in tests if test['status'] == 'SKIPPED')
+            sheet_skipped = sum(1 for test in tests if test['status'].upper().startswith('SKIPPED'))
             sheet_total = len(tests)
 
             html_content += f"""
