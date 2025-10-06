@@ -11,10 +11,16 @@ sys.path.append(current_dir)
 try:
     from database_config_manager import DatabaseConfigManager
     from database_connection_base import DatabaseConnectionBase
+    from postgresql_connector import PostgreSQLConnector
+    from oracle_connector import OracleConnector
+    from sqlserver_connector import SQLServerConnector
 except ImportError:
     # Fallback for different import contexts
     DatabaseConfigManager = None
     DatabaseConnectionBase = None
+    PostgreSQLConnector = None
+    OracleConnector = None
+    SQLServerConnector = None
 
 
 class MockDatabaseConnection:
@@ -469,7 +475,7 @@ class DataValidationTestCase:
             return "FAILED"
 
     def _get_database_connection(self):
-        """Get database connection using existing framework."""
+        """Get database connection using real database connectors."""
         try:
             if DatabaseConfigManager is None:
                 print("❌ DatabaseConfigManager not available")
@@ -487,15 +493,56 @@ class DataValidationTestCase:
                 print(f"❌ No configuration found for {self.environment_name}/{self.application_name}")
                 return None
             
-            # Get database type
+            # Get credentials from environment variables
+            username, password = DatabaseConfigManager.get_credentials(
+                self.environment_name.upper(), 
+                self.application_name.upper()
+            )
+            
+            if not username or not password:
+                print(f"❌ Credentials not found for {self.environment_name}/{self.application_name}")
+                print(f"   Please set environment variables: {self.environment_name.upper()}_{self.application_name.upper()}_USERNAME and {self.environment_name.upper()}_{self.application_name.upper()}_PASSWORD")
+                return None
+            
+            # Get database type and connection parameters
             db_type = config.get('db_type', '').lower()
+            host = config.get('host')
+            port = config.get('port')
             
-            # For this implementation, we'll create a simplified connection
-            # Since the existing connectors need credentials which aren't available in test case
-            # We'll simulate the connection for now
+            print(f"🔗 Connecting to {db_type} database: {host}:{port}")
             
-            print(f"✅ Database connection established: {db_type}")
-            return MockDatabaseConnection(db_type, config)
+            # Create appropriate connector based on database type
+            connector = None
+            if db_type == 'postgresql':
+                database = config.get('database')
+                if not database:
+                    print(f"❌ Database name not specified for PostgreSQL connection")
+                    return None
+                connector = PostgreSQLConnector(host, port, username, password, database)
+                
+            elif db_type == 'oracle':
+                service_name = config.get('service_name')
+                if not service_name:
+                    print(f"❌ Service name not specified for Oracle connection")
+                    return None
+                connector = OracleConnector(host, port, username, password, service_name)
+                
+            elif db_type == 'sqlserver':
+                database = config.get('database', 'master')  # Default to master if not specified
+                connector = SQLServerConnector(host, port, username, password, database)
+                
+            else:
+                print(f"❌ Unsupported database type: {db_type}")
+                return None
+            
+            # Test the connection
+            success, message = connector.connect()
+            if success:
+                print(f"✅ Database connection established: {message}")
+                return connector
+            else:
+                print(f"❌ Database connection failed: {message}")
+                return None
             
         except Exception as e:
             print(f"❌ Database connection failed: {str(e)}")
@@ -511,30 +558,89 @@ class DataValidationTestCase:
                 schema_name = 'public'  # Default for PostgreSQL
                 table_name_only = table_name
             
-            # Database-agnostic query for schema information
-            schema_query = """
-                SELECT 
-                    column_name,
-                    data_type,
-                    character_maximum_length,
-                    numeric_precision,
-                    numeric_scale,
-                    is_nullable,
-                    column_default,
-                    ordinal_position
-                FROM information_schema.columns 
-                WHERE table_schema = %s AND table_name = %s
-                ORDER BY ordinal_position
-            """
-            
-            result = db_connection.execute_query(schema_query, (schema_name, table_name_only))
-            
-            if not result or not result.get('rows'):
-                print(f"❌ No schema found for table: {table_name}")
-                return None
+            # Check if we have a real database connection or mock
+            if hasattr(db_connection, 'connection') and db_connection.connection is not None:
+                # Real database connection - determine database type
+                connector_type = type(db_connection).__name__.lower()
                 
-            return result['rows']
-            
+                if 'oracle' in connector_type:
+                    # Oracle uses different schema query
+                    schema_query = f"""
+                        SELECT 
+                            column_name,
+                            data_type,
+                            char_length as character_maximum_length,
+                            data_precision as numeric_precision,
+                            data_scale as numeric_scale,
+                            nullable as is_nullable,
+                            data_default as column_default,
+                            column_id as ordinal_position
+                        FROM user_tab_columns 
+                        WHERE table_name = '{table_name_only.upper()}'
+                        ORDER BY column_id
+                    """
+                elif 'sqlserver' in connector_type:
+                    # SQL Server uses different schema query
+                    schema_query = f"""
+                        SELECT 
+                            COLUMN_NAME,
+                            DATA_TYPE,
+                            CHARACTER_MAXIMUM_LENGTH,
+                            NUMERIC_PRECISION,
+                            NUMERIC_SCALE,
+                            IS_NULLABLE,
+                            COLUMN_DEFAULT,
+                            ORDINAL_POSITION
+                        FROM INFORMATION_SCHEMA.COLUMNS 
+                        WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name_only}'
+                        ORDER BY ORDINAL_POSITION
+                    """
+                else:
+                    # PostgreSQL and others
+                    schema_query = f"""
+                        SELECT 
+                            column_name,
+                            data_type,
+                            character_maximum_length,
+                            numeric_precision,
+                            numeric_scale,
+                            is_nullable,
+                            column_default,
+                            ordinal_position
+                        FROM information_schema.columns 
+                        WHERE table_schema = '{schema_name}' AND table_name = '{table_name_only}'
+                        ORDER BY ordinal_position
+                    """
+                
+                success, result = db_connection.execute_query(schema_query)
+                
+                if success and result:
+                    return result
+                else:
+                    print(f"❌ No schema found for table: {table_name}")
+                    return None
+            else:
+                # MockDatabaseConnection - fallback for testing
+                schema_query = """
+                    SELECT 
+                        column_name,
+                        data_type,
+                        character_maximum_length,
+                        numeric_precision,
+                        numeric_scale,
+                        is_nullable,
+                        column_default,
+                        ordinal_position
+                    FROM information_schema.columns 
+                    WHERE table_schema = %s AND table_name = %s
+                    ORDER BY ordinal_position
+                """
+                result = db_connection.execute_query(schema_query, (schema_name, table_name_only))
+                if not result or not result.get('rows'):
+                    print(f"❌ No schema found for table: {table_name}")
+                    return None
+                return result['rows']
+                
         except Exception as e:
             print(f"❌ Error getting schema for {table_name}: {str(e)}")
             return None
@@ -542,16 +648,29 @@ class DataValidationTestCase:
     def _execute_count_query(self, db_connection, query, table_type):
         """Execute count query and return result."""
         try:
-            result = db_connection.execute_query(query)
-            
-            if not result or not result.get('rows'):
-                print(f"❌ No result from {table_type} count query")
-                return None
+            if hasattr(db_connection, 'connection') and db_connection.connection is not None:
+                # Real database connection
+                success, result = db_connection.execute_query(query)
                 
-            count = result['rows'][0][0]
-            print(f"   {table_type.title()} count: {count:,}")
-            return count
-            
+                if success and result:
+                    count = result[0][0]
+                    print(f"   {table_type.title()} count: {count:,}")
+                    return count
+                else:
+                    print(f"❌ No result from {table_type} count query")
+                    return None
+            else:
+                # MockDatabaseConnection - fallback for testing
+                result = db_connection.execute_query(query)
+                
+                if not result or not result.get('rows'):
+                    print(f"❌ No result from {table_type} count query")
+                    return None
+                    
+                count = result['rows'][0][0]
+                print(f"   {table_type.title()} count: {count:,}")
+                return count
+                
         except Exception as e:
             print(f"❌ Error executing {table_type} count query: {str(e)}")
             return None
@@ -700,24 +819,46 @@ class DataValidationTestCase:
                 target_query = f"SELECT {column_name} FROM {target_table} ORDER BY {column_name} LIMIT {sample_size}"
                 
                 # Execute queries
-                source_result = db_connection.execute_query(source_query)
-                target_result = db_connection.execute_query(target_query)
-                
-                if not source_result or not target_result:
-                    comparison_results.append({
-                        'column': column_name,
-                        'status': 'FAILED',
-                        'reason': 'Failed to retrieve column data',
-                        'source_count': 0,
-                        'target_count': 0,
-                        'match_count': 0,
-                        'warnings': []
-                    })
-                    continue
-                
-                # Extract column values
-                source_values = [row[0] for row in source_result.get('rows', [])]
-                target_values = [row[0] for row in target_result.get('rows', [])]
+                if hasattr(db_connection, 'connection') and db_connection.connection is not None:
+                    # Real database connection
+                    source_success, source_result = db_connection.execute_query(source_query)
+                    target_success, target_result = db_connection.execute_query(target_query)
+                    
+                    if not source_success or not target_success or not source_result or not target_result:
+                        comparison_results.append({
+                            'column': column_name,
+                            'status': 'FAILED',
+                            'reason': 'Failed to retrieve column data',
+                            'source_count': 0,
+                            'target_count': 0,
+                            'match_count': 0,
+                            'warnings': []
+                        })
+                        continue
+                    
+                    # Extract column values from real database results
+                    source_values = [row[0] for row in source_result]
+                    target_values = [row[0] for row in target_result]
+                else:
+                    # MockDatabaseConnection - fallback for testing
+                    source_result = db_connection.execute_query(source_query)
+                    target_result = db_connection.execute_query(target_query)
+                    
+                    if not source_result or not target_result:
+                        comparison_results.append({
+                            'column': column_name,
+                            'status': 'FAILED',
+                            'reason': 'Failed to retrieve column data',
+                            'source_count': 0,
+                            'target_count': 0,
+                            'match_count': 0,
+                            'warnings': []
+                        })
+                        continue
+                    
+                    # Extract column values from mock database results
+                    source_values = [row[0] for row in source_result.get('rows', [])]
+                    target_values = [row[0] for row in target_result.get('rows', [])]
                 
                 # Compare values based on data type
                 if self._is_numeric_type(source_data_type):
@@ -766,6 +907,7 @@ class DataValidationTestCase:
         min_count = min(source_count, target_count)
         match_count = 0
         mismatches = []
+        detailed_mismatches = []  # Store detailed mismatch info
         
         for i in range(min_count):
             source_val = source_values[i]
@@ -775,20 +917,44 @@ class DataValidationTestCase:
             if source_val is None and target_val is None:
                 match_count += 1
             elif source_val is None or target_val is None:
-                mismatches.append(f'Row {i+1}: {source_val} vs {target_val}')
+                mismatch_detail = {
+                    'row': i + 1,
+                    'source_value': source_val,
+                    'target_value': target_val,
+                    'issue': 'NULL mismatch'
+                }
+                mismatches.append(f'Row {i+1}: NULL mismatch - Source: {source_val}, Target: {target_val}')
+                detailed_mismatches.append(mismatch_detail)
             else:
                 try:
                     # Convert to float for comparison
                     source_num = float(source_val)
                     target_num = float(target_val)
+                    difference = abs(source_num - target_num)
                     
                     # Check if within tolerance
-                    if abs(source_num - target_num) <= tolerance:
+                    if difference <= tolerance:
                         match_count += 1
                     else:
-                        mismatches.append(f'Row {i+1}: {source_num} vs {target_num} (diff: {abs(source_num - target_num):.6f})')
+                        mismatch_detail = {
+                            'row': i + 1,
+                            'source_value': source_num,
+                            'target_value': target_num,
+                            'difference': difference,
+                            'tolerance': tolerance,
+                            'issue': f'Exceeds tolerance by {difference - tolerance:.6f}'
+                        }
+                        mismatches.append(f'Row {i+1}: {source_num} vs {target_num} (diff: {difference:.6f}, tolerance: {tolerance})')
+                        detailed_mismatches.append(mismatch_detail)
                 except (ValueError, TypeError):
-                    mismatches.append(f'Row {i+1}: Non-numeric values {source_val} vs {target_val}')
+                    mismatch_detail = {
+                        'row': i + 1,
+                        'source_value': source_val,
+                        'target_value': target_val,
+                        'issue': 'Non-numeric values'
+                    }
+                    mismatches.append(f'Row {i+1}: Non-numeric values - Source: {source_val}, Target: {target_val}')
+                    detailed_mismatches.append(mismatch_detail)
         
         # Calculate match percentage
         match_percentage = (match_count / min_count * 100) if min_count > 0 else 0
@@ -800,8 +966,6 @@ class DataValidationTestCase:
         else:
             status = 'FAILED'
             reason = f'{match_percentage:.1f}% match rate below threshold (90%)'
-            if mismatches:
-                reason += f'. Sample mismatches: {"; ".join(mismatches[:3])}'
         
         return {
             'column': column_name,
@@ -811,7 +975,9 @@ class DataValidationTestCase:
             'target_count': target_count,
             'match_count': match_count,
             'match_percentage': match_percentage,
-            'warnings': warnings
+            'warnings': warnings,
+            'mismatches': mismatches,
+            'detailed_mismatches': detailed_mismatches[:20]  # Store first 20 detailed mismatches
         }
 
     def _compare_text_column(self, column_name, source_values, target_values):
@@ -828,6 +994,7 @@ class DataValidationTestCase:
         exact_match_count = 0
         checksum_match_count = 0
         mismatches = []
+        detailed_mismatches = []  # Store detailed mismatch info
         
         for i in range(min_count):
             source_val = source_values[i]
@@ -838,7 +1005,14 @@ class DataValidationTestCase:
                 exact_match_count += 1
                 checksum_match_count += 1
             elif source_val is None or target_val is None:
-                mismatches.append(f'Row {i+1}: NULL mismatch')
+                mismatch_detail = {
+                    'row': i + 1,
+                    'source_value': source_val,
+                    'target_value': target_val,
+                    'issue': 'NULL mismatch'
+                }
+                mismatches.append(f'Row {i+1}: NULL mismatch - Source: {source_val}, Target: {target_val}')
+                detailed_mismatches.append(mismatch_detail)
             else:
                 # Convert to string
                 source_str = str(source_val).strip()
@@ -858,10 +1032,35 @@ class DataValidationTestCase:
                         if source_hash == target_hash:
                             checksum_match_count += 1
                             warnings.append(f'Row {i+1}: Different text but matching checksum')
+                            mismatch_detail = {
+                                'row': i + 1,
+                                'source_value': f'{source_str[:100]}...',
+                                'target_value': f'{target_str[:100]}...',
+                                'source_checksum': source_hash,
+                                'target_checksum': target_hash,
+                                'issue': 'Different text but matching checksum'
+                            }
+                            detailed_mismatches.append(mismatch_detail)
                         else:
-                            mismatches.append(f'Row {i+1}: Text and checksum mismatch')
+                            mismatch_detail = {
+                                'row': i + 1,
+                                'source_value': f'{source_str[:100]}...',
+                                'target_value': f'{target_str[:100]}...',
+                                'source_checksum': source_hash,
+                                'target_checksum': target_hash,
+                                'issue': 'Text and checksum mismatch'
+                            }
+                            mismatches.append(f'Row {i+1}: Text and checksum mismatch - Source: "{source_str[:50]}...", Target: "{target_str[:50]}..."')
+                            detailed_mismatches.append(mismatch_detail)
                     else:
-                        mismatches.append(f'Row {i+1}: "{source_str[:50]}..." vs "{target_str[:50]}..."')
+                        mismatch_detail = {
+                            'row': i + 1,
+                            'source_value': source_str,
+                            'target_value': target_str,
+                            'issue': 'Text values differ'
+                        }
+                        mismatches.append(f'Row {i+1}: Text mismatch - Source: "{source_str}", Target: "{target_str}"')
+                        detailed_mismatches.append(mismatch_detail)
         
         # Calculate match percentages
         exact_match_percentage = (exact_match_count / min_count * 100) if min_count > 0 else 0
@@ -877,8 +1076,6 @@ class DataValidationTestCase:
         else:
             status = 'FAILED'
             reason = f'{checksum_match_percentage:.1f}% match rate below threshold (95%)'
-            if mismatches:
-                reason += f'. Sample mismatches: {"; ".join(mismatches[:3])}'
         
         return {
             'column': column_name,
@@ -889,7 +1086,9 @@ class DataValidationTestCase:
             'match_count': checksum_match_count,
             'exact_match_count': exact_match_count,
             'match_percentage': checksum_match_percentage,
-            'warnings': warnings
+            'warnings': warnings,
+            'mismatches': mismatches,
+            'detailed_mismatches': detailed_mismatches[:20]  # Store first 20 detailed mismatches
         }
 
     def _compare_generic_column(self, column_name, source_values, target_values):
@@ -905,6 +1104,7 @@ class DataValidationTestCase:
         min_count = min(source_count, target_count)
         match_count = 0
         mismatches = []
+        detailed_mismatches = []  # Store detailed mismatch info
         
         for i in range(min_count):
             source_val = source_values[i]
@@ -914,7 +1114,14 @@ class DataValidationTestCase:
             if source_val == target_val:
                 match_count += 1
             else:
-                mismatches.append(f'Row {i+1}: {source_val} vs {target_val}')
+                mismatch_detail = {
+                    'row': i + 1,
+                    'source_value': source_val,
+                    'target_value': target_val,
+                    'issue': 'Values differ'
+                }
+                mismatches.append(f'Row {i+1}: Value mismatch - Source: {source_val}, Target: {target_val}')
+                detailed_mismatches.append(mismatch_detail)
         
         # Calculate match percentage
         match_percentage = (match_count / min_count * 100) if min_count > 0 else 0
@@ -926,8 +1133,6 @@ class DataValidationTestCase:
         else:
             status = 'FAILED'
             reason = f'{match_percentage:.1f}% match rate below threshold (100%)'
-            if mismatches:
-                reason += f'. Sample mismatches: {"; ".join(mismatches[:3])}'
         
         return {
             'column': column_name,
@@ -937,7 +1142,9 @@ class DataValidationTestCase:
             'target_count': target_count,
             'match_count': match_count,
             'match_percentage': match_percentage,
-            'warnings': warnings
+            'warnings': warnings,
+            'mismatches': mismatches,
+            'detailed_mismatches': detailed_mismatches[:20]  # Store first 20 detailed mismatches
         }
 
     def __repr__(self):

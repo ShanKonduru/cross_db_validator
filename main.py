@@ -510,6 +510,72 @@ def add_test_result_to_report(report, result):
                 report.add_list_item(f"Tolerance: {tolerance_percent}%")
                 report.add_list_item(f"Result: Variance exceeds tolerance limit")
             
+            # Column comparison validation failures
+            elif 'total_columns' in execution_details:
+                total_columns = execution_details.get('total_columns', 0)
+                passed_columns = execution_details.get('passed_columns', 0)
+                failed_columns = execution_details.get('failed_columns', 0)
+                tolerance_numeric = execution_details.get('tolerance_numeric', 0.001)
+                sample_size = execution_details.get('sample_size', 100)
+                comparison_results = execution_details.get('comparison_results', [])
+                
+                report.add_paragraph(f"**Column Comparison Validation Failed:**")
+                report.add_list_item(f"Total Columns Compared: {total_columns}")
+                report.add_list_item(f"Passed Columns: {passed_columns}")
+                report.add_list_item(f"Failed Columns: {failed_columns}")
+                report.add_list_item(f"Numeric Tolerance: {tolerance_numeric}")
+                report.add_list_item(f"Sample Size: {sample_size:,} rows")
+                
+                # Add detailed column-by-column results
+                if comparison_results:
+                    report.add_paragraph("")
+                    report.add_paragraph(f"**Detailed Column Results:**")
+                    
+                    for result in comparison_results:
+                        column_name = result.get('column', 'Unknown')
+                        column_status = result.get('status', 'UNKNOWN')
+                        match_percentage = result.get('match_percentage', 0)
+                        match_count = result.get('match_count', 0)
+                        source_count = result.get('source_count', 0)
+                        target_count = result.get('target_count', 0)
+                        detailed_mismatches = result.get('detailed_mismatches', [])
+                        
+                        status_icon = "✅" if column_status == "PASSED" else "❌"
+                        report.add_paragraph(f"  {status_icon} **{column_name}**: {match_percentage:.1f}% match ({match_count}/{min(source_count, target_count)})")
+                        
+                        # Show detailed mismatches for failed columns
+                        if column_status == "FAILED" and detailed_mismatches:
+                            report.add_paragraph(f"    **Sample Mismatches:**")
+                            for mismatch in detailed_mismatches[:10]:  # Show first 10 mismatches
+                                row = mismatch.get('row', 'N/A')
+                                source_val = mismatch.get('source_value', 'N/A')
+                                target_val = mismatch.get('target_value', 'N/A')
+                                issue = mismatch.get('issue', 'Unknown issue')
+                                
+                                # Format values for readability
+                                if isinstance(source_val, str) and len(str(source_val)) > 50:
+                                    source_display = f'"{str(source_val)[:47]}..."'
+                                else:
+                                    source_display = f'"{source_val}"' if isinstance(source_val, str) else source_val
+                                
+                                if isinstance(target_val, str) and len(str(target_val)) > 50:
+                                    target_display = f'"{str(target_val)[:47]}..."'
+                                else:
+                                    target_display = f'"{target_val}"' if isinstance(target_val, str) else target_val
+                                
+                                # Add difference information for numeric values
+                                if 'difference' in mismatch:
+                                    diff = mismatch.get('difference', 0)
+                                    tolerance = mismatch.get('tolerance', 0)
+                                    report.add_list_item(f"Row {row}: {source_display} → {target_display} (diff: {diff:.6f}, tolerance: {tolerance})")
+                                else:
+                                    report.add_list_item(f"Row {row}: {source_display} → {target_display}")
+                            
+                            # Show if there are more mismatches
+                            total_mismatches = len(result.get('mismatches', []))
+                            if total_mismatches > 10:
+                                report.add_list_item(f"... and {total_mismatches - 10} more mismatches")
+            
             # Schema validation failures
             if hard_failures:
                 report.add_paragraph(f"**Critical Schema Issues ({len(hard_failures)}):**")
@@ -522,7 +588,7 @@ def add_test_result_to_report(report, result):
                     report.add_list_item(warning)
             
             # General error messages
-            if error_message and 'source_count' not in execution_details:
+            if error_message and 'source_count' not in execution_details and 'total_columns' not in execution_details:
                 report.add_paragraph(f"**Error Message:** {error_message}")
         
         elif status == "PASSED":

@@ -4,6 +4,10 @@ pytest
 pytest-html
 pytest-cov
 
+# Database drivers
+psycopg2-binary  # PostgreSQL driver
+oracledb         # Oracle driver
+pyodbc           # SQL Server driver
 
 numpy
 pandas 
