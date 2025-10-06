@@ -20,11 +20,17 @@ class HTMLReportGenerator:
             'skipped': 0
         }
         self.sheets_data = {}
+        self.markdown_report_filename = None  # Store markdown report filename for linking
+
+    def set_markdown_report_filename(self, filename: str):
+        """Set the markdown report filename for linking."""
+        self.markdown_report_filename = filename
 
     def add_test_result(self, sheet_name: str, test_case_id: str, test_case_name: str, 
                        status: str, category: str = "", execution_time: str = "", 
-                       error_message: str = ""):
-        """Add a test result to the report."""
+                       error_message: str = "", failure_details: str = "", 
+                       soft_failures: List[str] = None, hard_failures: List[str] = None):
+        """Add a test result to the report with enhanced failure details."""
         test_result = {
             'sheet_name': sheet_name,
             'test_case_id': test_case_id,
@@ -33,6 +39,9 @@ class HTMLReportGenerator:
             'category': category,
             'execution_time': execution_time,
             'error_message': error_message,
+            'failure_details': failure_details,
+            'soft_failures': soft_failures or [],
+            'hard_failures': hard_failures or [],
             'timestamp': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
         
@@ -83,6 +92,45 @@ class HTMLReportGenerator:
             </div>
         </div>
         """
+
+    def _get_failure_details_html(self, test: Dict[str, Any]) -> str:
+        """Generate failure details HTML with soft/hard failure indicators."""
+        details_html = ""
+        
+        # Handle PASSED tests with soft failures (warnings)
+        if test['status'] == 'PASSED' and test['soft_failures']:
+            details_html += '<div class="text-warning small">'
+            details_html += f'<i class="fas fa-exclamation-triangle"></i> {len(test["soft_failures"])} warnings<br>'
+            for failure in test['soft_failures'][:3]:  # Show first 3
+                details_html += f'• {failure}<br>'
+            if len(test['soft_failures']) > 3:
+                details_html += f'... and {len(test["soft_failures"]) - 3} more'
+            details_html += '</div>'
+        
+        # Handle FAILED tests
+        elif test['status'] == 'FAILED':
+            if test['hard_failures']:
+                details_html += '<div class="text-danger small">'
+                details_html += f'<i class="fas fa-times-circle"></i> {len(test["hard_failures"])} critical issues<br>'
+                for failure in test['hard_failures'][:2]:  # Show first 2
+                    details_html += f'• {failure}<br>'
+                if len(test['hard_failures']) > 2:
+                    details_html += f'... and {len(test["hard_failures"]) - 2} more'
+                details_html += '</div>'
+            elif test['failure_details']:
+                details_html += f'<div class="text-danger small">{test["failure_details"]}</div>'
+            elif test['error_message']:
+                details_html += f'<div class="text-danger small">{test["error_message"]}</div>'
+        
+        # Handle SKIPPED tests
+        elif test['status'] == 'SKIPPED':
+            details_html = '<span class="text-muted small">Test was skipped</span>'
+        
+        # Default for PASSED without issues
+        else:
+            details_html = '<span class="text-success small"><i class="fas fa-check"></i> No issues</span>'
+        
+        return details_html
 
     def _generate_chart_data(self) -> str:
         """Generate JavaScript data for charts."""
@@ -169,9 +217,12 @@ class HTMLReportGenerator:
             <span class="navbar-brand mb-0 h1">
                 <i class="fas fa-chart-line"></i> {self.title}
             </span>
-            <span class="navbar-text">
-                <i class="fas fa-clock"></i> Generated: {timestamp}
-            </span>
+            <div class="navbar-nav">
+                {f'<a class="nav-link text-white" href="{self.markdown_report_filename}" target="_blank"><i class="fas fa-file-text"></i> Detailed MD Report</a>' if self.markdown_report_filename else ''}
+                <span class="navbar-text text-white ms-3">
+                    <i class="fas fa-clock"></i> Generated: {timestamp}
+                </span>
+            </div>
         </div>
     </nav>
 
@@ -290,6 +341,7 @@ class HTMLReportGenerator:
                                         <th>Test Case</th>
                                         <th>Category</th>
                                         <th>Status</th>
+                                        <th>Details</th>
                                         <th>Timestamp</th>
                                     </tr>
                                 </thead>
@@ -305,6 +357,7 @@ class HTMLReportGenerator:
                                             <span class="badge bg-info">{test['category']}</span>
                                         </td>
                                         <td>{self._get_status_badge(test['status'])}</td>
+                                        <td>{self._get_failure_details_html(test)}</td>
                                         <td><small class="text-muted">{test['timestamp']}</small></td>
                                     </tr>
                 """

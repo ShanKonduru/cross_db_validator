@@ -104,6 +104,12 @@ def main():
     # Create appropriate report generator
     report = create_report_generator(report_format)
     reader = ExcelTestCaseReader()
+    
+    # For HTML reports, also generate enhanced markdown report for linking
+    markdown_report_filename = None
+    if report_format == 'html':
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        markdown_report_filename = f"Test_Execution_Results_Enhanced_{timestamp}.md"
 
     all_test_cases = reader.get_test_case_details()
 
@@ -140,14 +146,35 @@ def main():
                     # Execute the test case
                     execution_status = test_case_obj.execute_test()
                     
+                    # Get detailed execution results
+                    execution_details = test_case_obj.get_last_execution_details()
+                    
                     # Add to report (for new report generators)
                     if hasattr(report, 'add_test_result'):
+                        # Extract failure details for HTML report
+                        soft_failures = execution_details.get('soft_failures', [])
+                        hard_failures = execution_details.get('hard_failures', [])
+                        error_message = execution_details.get('error_message', '')
+                        
+                        # Format failure details for display
+                        failure_details = ""
+                        if execution_status == "FAILED":
+                            if 'source_count' in execution_details:
+                                # Row count validation failure
+                                failure_details = f"Row count variance: {execution_details.get('variance_percent', 0):.1f}% (tolerance: {execution_details.get('tolerance_percent', 0)}%)"
+                            elif error_message:
+                                failure_details = error_message
+                        
                         report.add_test_result(
                             sheet_name=sheet_name,
                             test_case_id=test_case_obj.test_case_id,
                             test_case_name=test_case_obj.test_case_name,
                             status=execution_status,
-                            category=getattr(test_case_obj, 'category', 'DATAVALIDATION')
+                            category=getattr(test_case_obj, 'category', 'DATAVALIDATION'),
+                            failure_details=failure_details,
+                            soft_failures=soft_failures,
+                            hard_failures=hard_failures,
+                            error_message=error_message
                         )
                     else:
                         # Old format for standard markdown
@@ -202,8 +229,50 @@ def main():
         report.add_paragraph(f"Skipped Test Cases: {skipped_test_cases} skip rate: {skipped_test_cases / total_test_cases * 100 if total_test_cases > 0 else 0:.2f}%")
 
     # Save the report
+    if hasattr(report, 'set_markdown_report_filename') and markdown_report_filename:
+        report.set_markdown_report_filename(markdown_report_filename)
+    
     if report.save():
         print("Test report saved successfully.")
+        
+        # Generate enhanced markdown report for HTML format (for linking)
+        if report_format == 'html' and markdown_report_filename:
+            print("📄 Generating companion enhanced markdown report for detailed analysis...")
+            try:
+                # Create an enhanced markdown report
+                md_report = EnhancedMarkdownReportGenerator(
+                    title="Test Execution Results",
+                    output_file=f"output\\{markdown_report_filename}"
+                )
+                
+                # Add all test results to enhanced markdown report
+                for sheet_name in all_test_cases.keys():
+                    if sheet_name.lower() == "datavalidations":
+                        test_objects = data_validation_test_objects
+                    else:
+                        test_objects = smoke_test_objects
+                    
+                    for test_obj in test_objects:
+                        execution_status = getattr(test_obj, '_last_execution_status', 'UNKNOWN')
+                        
+                        # Add enhanced test result with detailed information
+                        md_report.add_test_result(
+                            test_case_id=test_obj.test_case_id,
+                            test_case_name=test_obj.test_case_name,
+                            status=execution_status,
+                            category=getattr(test_obj, 'test_category', 'UNKNOWN'),
+                            execution_time=f"{getattr(test_obj, '_execution_time_ms', 1000)}ms",
+                            sheet_name=sheet_name
+                        )
+                
+                if md_report.save():
+                    print(f"📄 Companion enhanced markdown report saved: output\\{markdown_report_filename}")
+                else:
+                    print("⚠️ Failed to save companion enhanced markdown report")
+                    
+            except Exception as e:
+                print(f"⚠️ Error generating companion markdown report: {e}")
+                # Don't fail the main execution if markdown generation fails
         
         # 💾 PERSISTENT DATA COLLECTION - NEW FEATURE
         print("\n💾 Saving execution data to persistent storage...")
