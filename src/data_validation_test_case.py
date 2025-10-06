@@ -36,6 +36,10 @@ class MockDatabaseConnection:
         if query_lower.startswith('select count(*)'):
             return self._mock_count_query(query)
         
+        # Handle column data queries for comparison
+        if query_lower.startswith('select ') and ' from ' in query_lower and 'limit' in query_lower:
+            return self._mock_column_data_query(query)
+        
         return {'rows': [], 'columns': []}
     
     def _mock_schema_query(self, query, params):
@@ -88,6 +92,80 @@ class MockDatabaseConnection:
             'columns': ['count']
         }
 
+    def _mock_column_data_query(self, query):
+        """Mock column data query for column comparison validation."""
+        import random
+        
+        # Extract column name from query
+        query_parts = query.lower().split()
+        select_idx = query_parts.index('select')
+        from_idx = query_parts.index('from')
+        column_name = query_parts[select_idx + 1]
+        
+        # Extract table name
+        table_name = query_parts[from_idx + 1]
+        
+        # Extract limit
+        limit_idx = query_parts.index('limit')
+        limit_value = int(query_parts[limit_idx + 1])
+        
+        # Generate mock data based on column name and table
+        rows = []
+        
+        if column_name == 'id':
+            # Generate sequential IDs with some variance between source and target
+            start_id = 1 if 'new_' not in table_name else 1
+            for i in range(limit_value):
+                rows.append([start_id + i])
+        
+        elif column_name == 'name':
+            # Generate sample names
+            names = ['Alice', 'Bob', 'Charlie', 'Diana', 'Eva', 'Frank', 'Grace', 'Henry']
+            for i in range(limit_value):
+                # Source vs target might have slight differences
+                if 'new_' in table_name and random.random() < 0.1:  # 10% different names in target
+                    name = names[random.randint(0, len(names)-1)] + '_modified'
+                else:
+                    name = names[i % len(names)]
+                rows.append([name])
+        
+        elif column_name == 'status':
+            # Generate status values (some differences between source and target)
+            for i in range(limit_value):
+                if 'new_' in table_name:
+                    # Target table has boolean values
+                    status = random.choice([True, False])
+                else:
+                    # Source table has varchar values
+                    status = random.choice(['A', 'I', 'P'])
+                rows.append([status])
+        
+        elif 'price' in column_name or 'amount' in column_name:
+            # Generate numeric data with tolerance testing
+            for i in range(limit_value):
+                base_value = 10.0 + (i * 0.5)
+                if 'new_' in table_name and random.random() < 0.2:  # 20% slight differences in target
+                    # Add small differences within/outside tolerance
+                    variance = random.uniform(-0.002, 0.002) if random.random() < 0.8 else random.uniform(-0.1, 0.1)
+                    value = base_value + variance
+                else:
+                    value = base_value
+                rows.append([round(value, 4)])
+        
+        else:
+            # Generic column data
+            for i in range(limit_value):
+                if 'new_' in table_name and random.random() < 0.05:  # 5% differences in target
+                    value = f'value_{i}_modified'
+                else:
+                    value = f'value_{i}'
+                rows.append([value])
+        
+        return {
+            'rows': rows,
+            'columns': [column_name]
+        }
+
 
 class DataValidationTestCase:
     """
@@ -134,8 +212,7 @@ class DataValidationTestCase:
             elif self.test_category == "ROW_COUNT_VALIDATION":
                 result = self._execute_row_count_validation()
             elif self.test_category == "COL_COL_VALIDATION":
-                result = "SKIPPED"  # Not implemented yet as requested
-                self._record_execution_result(result)
+                result = self._execute_column_comparison_validation()
             else:
                 # Legacy test execution for other categories
                 result = self._execute_legacy_test()
@@ -276,6 +353,118 @@ class DataValidationTestCase:
                 
         except Exception as e:
             print(f"❌ Row count validation error: {str(e)}")
+            self._record_execution_result("FAILED", {'error_message': str(e)})
+            return "FAILED"
+
+    def _execute_column_comparison_validation(self) -> str:
+        """Execute column-to-column comparison validation between source and target tables."""
+        try:
+            # Parse parameters
+            source_table = self.parameters.get('source_table', '')
+            target_table = self.parameters.get('target_table', '')
+            tolerance_numeric = float(self.parameters.get('tolerance_numeric', '0.001'))  # Default tolerance for numeric comparison
+            exclude_columns = self.parameters.get('exclude_columns', '').split(',') if self.parameters.get('exclude_columns') else []
+            exclude_columns = [col.strip() for col in exclude_columns]
+            sample_size = int(self.parameters.get('sample_size', '1000'))  # Default sample size
+            
+            if not source_table or not target_table:
+                print(f"❌ Missing table parameters: source={source_table}, target={target_table}")
+                self._record_execution_result("FAILED", {'error_message': 'Missing source or target table parameters'})
+                return "FAILED"
+            
+            print(f"🔍 Comparing column values: {source_table} vs {target_table}")
+            print(f"   📊 Sample size: {sample_size:,} rows")
+            print(f"   🔢 Numeric tolerance: {tolerance_numeric}")
+            if exclude_columns:
+                print(f"   ⚠️ Excluding columns: {', '.join(exclude_columns)}")
+            
+            # Get database connection
+            db_connection = self._get_database_connection()
+            if not db_connection:
+                return "FAILED"
+            
+            # Get table schemas to identify common columns
+            source_schema = self._get_table_schema(db_connection, source_table)
+            target_schema = self._get_table_schema(db_connection, target_table)
+            
+            if not source_schema or not target_schema:
+                print(f"❌ Could not retrieve schema for one or both tables")
+                self._record_execution_result("FAILED", {'error_message': 'Schema retrieval failed'})
+                return "FAILED"
+            
+            # Find common columns (excluding specified columns)
+            source_cols = {col[0]: col for col in source_schema}  # column_name as key
+            target_cols = {col[0]: col for col in target_schema}
+            common_columns = set(source_cols.keys()) & set(target_cols.keys())
+            
+            # Remove excluded columns
+            common_columns = [col for col in common_columns if col not in exclude_columns]
+            
+            if not common_columns:
+                print(f"❌ No common columns found for comparison")
+                self._record_execution_result("FAILED", {'error_message': 'No common columns found'})
+                return "FAILED"
+            
+            print(f"   📋 Comparing {len(common_columns)} columns: {', '.join(common_columns[:5])}{'...' if len(common_columns) > 5 else ''}")
+            
+            # Perform column comparison
+            comparison_results = self._compare_table_columns(
+                db_connection, source_table, target_table, 
+                common_columns, source_cols, target_cols, 
+                tolerance_numeric, sample_size
+            )
+            
+            # Analyze results
+            total_columns = len(common_columns)
+            passed_columns = len([r for r in comparison_results if r['status'] == 'PASSED'])
+            failed_columns = len([r for r in comparison_results if r['status'] == 'FAILED'])
+            warnings = [r for r in comparison_results if r.get('warnings')]
+            
+            print(f"   📊 Column comparison summary:")
+            print(f"      ✅ Passed: {passed_columns}/{total_columns}")
+            print(f"      ❌ Failed: {failed_columns}/{total_columns}")
+            print(f"      ⚠️ Warnings: {len(warnings)}")
+            
+            # Determine overall result
+            if failed_columns == 0:
+                status = "PASSED"
+                print(f"✅ Column comparison validation: PASSED")
+            else:
+                status = "FAILED"
+                print(f"❌ Column comparison validation: FAILED")
+                
+                # Show failed columns details
+                failed_results = [r for r in comparison_results if r['status'] == 'FAILED']
+                for failure in failed_results[:3]:  # Show first 3 failures
+                    print(f"      • {failure['column']}: {failure['reason']}")
+                if len(failed_results) > 3:
+                    print(f"      ... and {len(failed_results) - 3} more failures")
+            
+            # Record execution results
+            execution_details = {
+                'total_columns': total_columns,
+                'passed_columns': passed_columns,
+                'failed_columns': failed_columns,
+                'warnings_count': len(warnings),
+                'tolerance_numeric': tolerance_numeric,
+                'sample_size': sample_size,
+                'comparison_results': comparison_results[:10],  # Store first 10 for reporting
+                'soft_failures': [],  # Column comparison warnings
+                'hard_failures': []   # Column comparison failures
+            }
+            
+            # Classify failures as soft/hard
+            for result in comparison_results:
+                if result['status'] == 'FAILED':
+                    execution_details['hard_failures'].append(f"Column '{result['column']}': {result['reason']}")
+                elif result.get('warnings'):
+                    execution_details['soft_failures'].extend([f"Column '{result['column']}': {w}" for w in result['warnings']])
+            
+            self._record_execution_result(status, execution_details)
+            return status
+                
+        except Exception as e:
+            print(f"❌ Column comparison validation error: {str(e)}")
             self._record_execution_result("FAILED", {'error_message': str(e)})
             return "FAILED"
 
@@ -492,6 +681,264 @@ class DataValidationTestCase:
                         # Handle cases where split fails unexpectedly
                         pass
         return params
+
+    def _compare_table_columns(self, db_connection, source_table, target_table, 
+                              common_columns, source_cols, target_cols, 
+                              tolerance_numeric, sample_size):
+        """Compare column values between source and target tables."""
+        comparison_results = []
+        
+        for column_name in common_columns:
+            try:
+                # Get column data type for appropriate comparison strategy
+                source_col_info = source_cols[column_name]
+                target_col_info = target_cols[column_name]
+                source_data_type = source_col_info[1].upper()  # data_type
+                
+                # Build sample queries
+                source_query = f"SELECT {column_name} FROM {source_table} ORDER BY {column_name} LIMIT {sample_size}"
+                target_query = f"SELECT {column_name} FROM {target_table} ORDER BY {column_name} LIMIT {sample_size}"
+                
+                # Execute queries
+                source_result = db_connection.execute_query(source_query)
+                target_result = db_connection.execute_query(target_query)
+                
+                if not source_result or not target_result:
+                    comparison_results.append({
+                        'column': column_name,
+                        'status': 'FAILED',
+                        'reason': 'Failed to retrieve column data',
+                        'source_count': 0,
+                        'target_count': 0,
+                        'match_count': 0,
+                        'warnings': []
+                    })
+                    continue
+                
+                # Extract column values
+                source_values = [row[0] for row in source_result.get('rows', [])]
+                target_values = [row[0] for row in target_result.get('rows', [])]
+                
+                # Compare values based on data type
+                if self._is_numeric_type(source_data_type):
+                    result = self._compare_numeric_column(column_name, source_values, target_values, tolerance_numeric)
+                elif self._is_text_type(source_data_type):
+                    result = self._compare_text_column(column_name, source_values, target_values)
+                else:
+                    result = self._compare_generic_column(column_name, source_values, target_values)
+                
+                comparison_results.append(result)
+                
+            except Exception as e:
+                comparison_results.append({
+                    'column': column_name,
+                    'status': 'FAILED',
+                    'reason': f'Comparison error: {str(e)}',
+                    'source_count': 0,
+                    'target_count': 0,
+                    'match_count': 0,
+                    'warnings': []
+                })
+        
+        return comparison_results
+
+    def _is_numeric_type(self, data_type):
+        """Check if data type is numeric."""
+        numeric_types = ['INTEGER', 'BIGINT', 'SMALLINT', 'DECIMAL', 'NUMERIC', 
+                        'FLOAT', 'DOUBLE', 'REAL', 'NUMBER', 'INT', 'MONEY']
+        return any(nt in data_type for nt in numeric_types)
+
+    def _is_text_type(self, data_type):
+        """Check if data type is text/string."""
+        text_types = ['VARCHAR', 'CHAR', 'TEXT', 'STRING', 'CLOB', 'NVARCHAR', 'NCHAR']
+        return any(tt in data_type for tt in text_types)
+
+    def _compare_numeric_column(self, column_name, source_values, target_values, tolerance):
+        """Compare numeric column values with tolerance."""
+        source_count = len(source_values)
+        target_count = len(target_values)
+        warnings = []
+        
+        if source_count != target_count:
+            warnings.append(f'Row count mismatch: source={source_count}, target={target_count}')
+        
+        # Compare common values with tolerance
+        min_count = min(source_count, target_count)
+        match_count = 0
+        mismatches = []
+        
+        for i in range(min_count):
+            source_val = source_values[i]
+            target_val = target_values[i]
+            
+            # Handle NULL values
+            if source_val is None and target_val is None:
+                match_count += 1
+            elif source_val is None or target_val is None:
+                mismatches.append(f'Row {i+1}: {source_val} vs {target_val}')
+            else:
+                try:
+                    # Convert to float for comparison
+                    source_num = float(source_val)
+                    target_num = float(target_val)
+                    
+                    # Check if within tolerance
+                    if abs(source_num - target_num) <= tolerance:
+                        match_count += 1
+                    else:
+                        mismatches.append(f'Row {i+1}: {source_num} vs {target_num} (diff: {abs(source_num - target_num):.6f})')
+                except (ValueError, TypeError):
+                    mismatches.append(f'Row {i+1}: Non-numeric values {source_val} vs {target_val}')
+        
+        # Calculate match percentage
+        match_percentage = (match_count / min_count * 100) if min_count > 0 else 0
+        
+        # Determine status (90% match threshold for numeric columns)
+        if match_percentage >= 90:
+            status = 'PASSED'
+            reason = f'{match_percentage:.1f}% match rate within tolerance {tolerance}'
+        else:
+            status = 'FAILED'
+            reason = f'{match_percentage:.1f}% match rate below threshold (90%)'
+            if mismatches:
+                reason += f'. Sample mismatches: {"; ".join(mismatches[:3])}'
+        
+        return {
+            'column': column_name,
+            'status': status,
+            'reason': reason,
+            'source_count': source_count,
+            'target_count': target_count,
+            'match_count': match_count,
+            'match_percentage': match_percentage,
+            'warnings': warnings
+        }
+
+    def _compare_text_column(self, column_name, source_values, target_values):
+        """Compare text column values with exact matching and checksum for long texts."""
+        source_count = len(source_values)
+        target_count = len(target_values)
+        warnings = []
+        
+        if source_count != target_count:
+            warnings.append(f'Row count mismatch: source={source_count}, target={target_count}')
+        
+        # Compare common values
+        min_count = min(source_count, target_count)
+        exact_match_count = 0
+        checksum_match_count = 0
+        mismatches = []
+        
+        for i in range(min_count):
+            source_val = source_values[i]
+            target_val = target_values[i]
+            
+            # Handle NULL values
+            if source_val is None and target_val is None:
+                exact_match_count += 1
+                checksum_match_count += 1
+            elif source_val is None or target_val is None:
+                mismatches.append(f'Row {i+1}: NULL mismatch')
+            else:
+                # Convert to string
+                source_str = str(source_val).strip()
+                target_str = str(target_val).strip()
+                
+                # Exact match
+                if source_str == target_str:
+                    exact_match_count += 1
+                    checksum_match_count += 1
+                else:
+                    # For long texts (>100 chars), compare checksums
+                    if len(source_str) > 100 and len(target_str) > 100:
+                        import hashlib
+                        source_hash = hashlib.md5(source_str.encode()).hexdigest()
+                        target_hash = hashlib.md5(target_str.encode()).hexdigest()
+                        
+                        if source_hash == target_hash:
+                            checksum_match_count += 1
+                            warnings.append(f'Row {i+1}: Different text but matching checksum')
+                        else:
+                            mismatches.append(f'Row {i+1}: Text and checksum mismatch')
+                    else:
+                        mismatches.append(f'Row {i+1}: "{source_str[:50]}..." vs "{target_str[:50]}..."')
+        
+        # Calculate match percentages
+        exact_match_percentage = (exact_match_count / min_count * 100) if min_count > 0 else 0
+        checksum_match_percentage = (checksum_match_count / min_count * 100) if min_count > 0 else 0
+        
+        # Determine status (95% checksum match threshold for text columns)
+        if checksum_match_percentage >= 95:
+            status = 'PASSED'
+            if exact_match_percentage == checksum_match_percentage:
+                reason = f'{exact_match_percentage:.1f}% exact match rate'
+            else:
+                reason = f'{exact_match_percentage:.1f}% exact, {checksum_match_percentage:.1f}% checksum match'
+        else:
+            status = 'FAILED'
+            reason = f'{checksum_match_percentage:.1f}% match rate below threshold (95%)'
+            if mismatches:
+                reason += f'. Sample mismatches: {"; ".join(mismatches[:3])}'
+        
+        return {
+            'column': column_name,
+            'status': status,
+            'reason': reason,
+            'source_count': source_count,
+            'target_count': target_count,
+            'match_count': checksum_match_count,
+            'exact_match_count': exact_match_count,
+            'match_percentage': checksum_match_percentage,
+            'warnings': warnings
+        }
+
+    def _compare_generic_column(self, column_name, source_values, target_values):
+        """Compare generic column values with exact matching."""
+        source_count = len(source_values)
+        target_count = len(target_values)
+        warnings = []
+        
+        if source_count != target_count:
+            warnings.append(f'Row count mismatch: source={source_count}, target={target_count}')
+        
+        # Compare common values
+        min_count = min(source_count, target_count)
+        match_count = 0
+        mismatches = []
+        
+        for i in range(min_count):
+            source_val = source_values[i]
+            target_val = target_values[i]
+            
+            # Direct comparison
+            if source_val == target_val:
+                match_count += 1
+            else:
+                mismatches.append(f'Row {i+1}: {source_val} vs {target_val}')
+        
+        # Calculate match percentage
+        match_percentage = (match_count / min_count * 100) if min_count > 0 else 0
+        
+        # Determine status (100% match threshold for generic columns)
+        if match_percentage == 100:
+            status = 'PASSED'
+            reason = f'{match_percentage:.1f}% exact match'
+        else:
+            status = 'FAILED'
+            reason = f'{match_percentage:.1f}% match rate below threshold (100%)'
+            if mismatches:
+                reason += f'. Sample mismatches: {"; ".join(mismatches[:3])}'
+        
+        return {
+            'column': column_name,
+            'status': status,
+            'reason': reason,
+            'source_count': source_count,
+            'target_count': target_count,
+            'match_count': match_count,
+            'match_percentage': match_percentage,
+            'warnings': warnings
+        }
 
     def __repr__(self):
         """A friendly string representation of the object."""
