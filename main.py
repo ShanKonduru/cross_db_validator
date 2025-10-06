@@ -266,12 +266,30 @@ def execute_tests_once():
                             # Execute the test
                             execution_status = smoke_test.execute_test()
                             
-                            # Create simplified execution details for smoke tests
+                            # Extract detailed failure information from execution status
                             execution_details = {
-                                'error_message': '' if execution_status == 'PASSED' else 'Test execution failed',
                                 'execution_time_ms': getattr(smoke_test, '_execution_time_ms', 1000),
                                 'test_type': 'SMOKE'
                             }
+                            
+                            # Parse execution status for detailed error information
+                            if execution_status == 'PASSED':
+                                execution_details['error_message'] = ''
+                            elif execution_status.startswith('SKIPPED'):
+                                # Extract the reason from SKIPPED status
+                                if ':' in execution_status:
+                                    execution_details['error_message'] = execution_status.split(':', 1)[1].strip()
+                                else:
+                                    execution_details['error_message'] = 'Test was skipped'
+                            elif execution_status.startswith('FAILED'):
+                                # Extract the reason from FAILED status
+                                if ':' in execution_status:
+                                    execution_details['error_message'] = execution_status.split(':', 1)[1].strip()
+                                else:
+                                    execution_details['error_message'] = 'Test execution failed'
+                            else:
+                                # For any other status, use the full status as error message
+                                execution_details['error_message'] = execution_status
                             
                             # Create result object
                             result = {
@@ -339,10 +357,25 @@ def generate_report_from_data(report_format, test_execution_data):
         # Create the appropriate report generator
         report = create_report_generator(report_format)
         
-        # Generate enhanced markdown for HTML linking if needed
-        markdown_report_filename = None
+        # Generate both standard and enhanced markdown for HTML linking if needed
+        standard_markdown_filename = None
+        enhanced_markdown_filename = None
+        
         if report_format == 'html':
-            # Generate enhanced markdown first for HTML linking
+            # Generate standard markdown first for HTML linking (contains detailed failure info)
+            standard_md_report = create_report_generator('md')
+            
+            # Add all test results to standard markdown report
+            for result in test_execution_data['test_results']:
+                add_test_result_to_report(standard_md_report, result)
+            
+            # Save standard markdown and get filename
+            if standard_md_report.save():
+                # Extract filename from the full path
+                import os
+                standard_markdown_filename = os.path.basename(standard_md_report.output_file)
+            
+            # Generate enhanced markdown for HTML linking (contains visual summaries)
             enhanced_md_report = create_report_generator('enhanced-md')
             
             # Add all test results to enhanced markdown report
@@ -352,8 +385,7 @@ def generate_report_from_data(report_format, test_execution_data):
             # Save enhanced markdown and get filename
             if enhanced_md_report.save():
                 # Extract filename from the full path
-                import os
-                markdown_report_filename = os.path.basename(enhanced_md_report.output_file)
+                enhanced_markdown_filename = os.path.basename(enhanced_md_report.output_file)
         
         # Add all test results to the main report
         for result in test_execution_data['test_results']:
@@ -373,9 +405,16 @@ def generate_report_from_data(report_format, test_execution_data):
             report.add_paragraph(f"Failed Test Cases: {failed} fail rate: {failed / total * 100 if total > 0 else 0:.2f}%")
             report.add_paragraph(f"Skipped Test Cases: {skipped} skip rate: {skipped / total * 100 if total > 0 else 0:.2f}%")
         
-        # Set markdown filename for HTML reports
-        if hasattr(report, 'set_markdown_report_filename') and markdown_report_filename:
-            report.set_markdown_report_filename(markdown_report_filename)
+        # Set markdown filenames for HTML reports (new feature - two links)
+        if hasattr(report, 'set_standard_markdown_filename') and standard_markdown_filename:
+            report.set_standard_markdown_filename(standard_markdown_filename)
+        
+        if hasattr(report, 'set_enhanced_markdown_filename') and enhanced_markdown_filename:
+            report.set_enhanced_markdown_filename(enhanced_markdown_filename)
+        
+        # Legacy support for single markdown filename
+        if hasattr(report, 'set_markdown_report_filename') and standard_markdown_filename:
+            report.set_markdown_report_filename(standard_markdown_filename)
         
         # Save the final report
         if report.save():
@@ -438,10 +477,70 @@ def add_test_result_to_report(report, result):
                 error_message=error_message
             )
     else:
-        # Old format for standard markdown
-        report.add_heading(f"Test Case ID: {test_case_obj.test_case_id if test_case_obj else result.get('test_id', 'N/A')}", level=3)
-        report.add_heading(f"Test Case: {test_case_obj.test_case_name if test_case_obj else result.get('description', 'N/A')}", level=4)
-        report.add_heading(f"Status: {result['status']}", level=4)
+        # Enhanced format for standard markdown with failure details
+        test_id = test_case_obj.test_case_id if test_case_obj else result.get('test_id', 'N/A')
+        test_name = test_case_obj.test_case_name if test_case_obj else result.get('description', 'N/A')
+        status = result['status']
+        
+        report.add_heading(f"Test Case ID: {test_id}", level=3)
+        report.add_heading(f"Test Case: {test_name}", level=4)
+        report.add_heading(f"Status: {status}", level=4)
+        
+        # Add detailed failure information for failed tests and warnings for passed tests
+        if status == "FAILED":
+            soft_failures = execution_details.get('soft_failures', [])
+            hard_failures = execution_details.get('hard_failures', [])
+            error_message = execution_details.get('error_message', '')
+            
+            # Add failure details section
+            report.add_heading("Failure Details:", level=5)
+            
+            # Row count validation failures
+            if 'source_count' in execution_details:
+                source_count = execution_details.get('source_count', 0)
+                target_count = execution_details.get('target_count', 0)
+                variance_percent = execution_details.get('variance_percent', 0)
+                tolerance_percent = execution_details.get('tolerance_percent', 0)
+                
+                report.add_paragraph(f"**Row Count Validation Failed:**")
+                report.add_list_item(f"Source Table Count: {source_count:,}")
+                report.add_list_item(f"Target Table Count: {target_count:,}")
+                report.add_list_item(f"Difference: {abs(target_count - source_count):,} rows")
+                report.add_list_item(f"Variance: {variance_percent:.2f}%")
+                report.add_list_item(f"Tolerance: {tolerance_percent}%")
+                report.add_list_item(f"Result: Variance exceeds tolerance limit")
+            
+            # Schema validation failures
+            if hard_failures:
+                report.add_paragraph(f"**Critical Schema Issues ({len(hard_failures)}):**")
+                for failure in hard_failures:
+                    report.add_list_item(failure)
+            
+            if soft_failures:
+                report.add_paragraph(f"**Schema Warnings ({len(soft_failures)}):**")
+                for warning in soft_failures:
+                    report.add_list_item(warning)
+            
+            # General error messages
+            if error_message and 'source_count' not in execution_details:
+                report.add_paragraph(f"**Error Message:** {error_message}")
+        
+        elif status == "PASSED":
+            # Show warnings for passed tests
+            soft_failures = execution_details.get('soft_failures', [])
+            if soft_failures:
+                report.add_heading("Warnings:", level=5)
+                report.add_paragraph(f"**Schema Warnings ({len(soft_failures)}):**")
+                for warning in soft_failures:
+                    report.add_list_item(warning)
+        
+        # Add execution time if available
+        execution_time_ms = getattr(test_case_obj, '_execution_time_ms', None)
+        if execution_time_ms:
+            report.add_paragraph(f"**Execution Time:** {execution_time_ms}ms")
+        
+        # Add separator for readability
+        report.add_separator()
 
 
 def generate_trends_report():

@@ -21,10 +21,20 @@ class HTMLReportGenerator:
         }
         self.sheets_data = {}
         self.markdown_report_filename = None  # Store markdown report filename for linking
+        self.standard_markdown_filename = None  # Store standard markdown filename
+        self.enhanced_markdown_filename = None  # Store enhanced markdown filename
 
     def set_markdown_report_filename(self, filename: str):
         """Set the markdown report filename for linking."""
         self.markdown_report_filename = filename
+    
+    def set_standard_markdown_filename(self, filename: str):
+        """Set the standard markdown report filename for linking."""
+        self.standard_markdown_filename = filename
+    
+    def set_enhanced_markdown_filename(self, filename: str):
+        """Set the enhanced markdown report filename for linking."""
+        self.enhanced_markdown_filename = filename
 
     def add_test_result(self, sheet_name: str, test_case_id: str, test_case_name: str, 
                        status: str, category: str = "", execution_time: str = "", 
@@ -217,8 +227,9 @@ class HTMLReportGenerator:
             <span class="navbar-brand mb-0 h1">
                 <i class="fas fa-chart-line"></i> {self.title}
             </span>
-            <div class="navbar-nav">
-                {f'<a class="nav-link text-white" href="{self.markdown_report_filename}" target="_blank"><i class="fas fa-file-text"></i> Detailed MD Report</a>' if self.markdown_report_filename else ''}
+            <div class="navbar-nav d-flex flex-row">
+                {f'<a class="nav-link text-white me-3" href="{self.standard_markdown_filename}" target="_blank"><i class="fas fa-file-alt"></i> Standard Report</a>' if self.standard_markdown_filename else ''}
+                {f'<a class="nav-link text-white me-3" href="{self.enhanced_markdown_filename}" target="_blank"><i class="fas fa-file-chart-line"></i> Enhanced Report</a>' if self.enhanced_markdown_filename else ''}
                 <span class="navbar-text text-white ms-3">
                     <i class="fas fa-clock"></i> Generated: {timestamp}
                 </span>
