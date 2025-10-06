@@ -373,6 +373,15 @@ class DataValidationTestCase:
             exclude_columns = [col.strip() for col in exclude_columns]
             sample_size = int(self.parameters.get('sample_size', '1000'))  # Default sample size
             
+            # Parse column mappings (new feature)
+            column_mappings = {}
+            if self.parameters.get('column_mappings'):
+                mappings_str = self.parameters.get('column_mappings', '')
+                for mapping in mappings_str.split(','):
+                    if '=' in mapping:
+                        source_col, target_col = mapping.split('=', 1)
+                        column_mappings[source_col.strip()] = target_col.strip()
+            
             if not source_table or not target_table:
                 print(f"❌ Missing table parameters: source={source_table}, target={target_table}")
                 self._record_execution_result("FAILED", {'error_message': 'Missing source or target table parameters'})
@@ -383,6 +392,12 @@ class DataValidationTestCase:
             print(f"   🔢 Numeric tolerance: {tolerance_numeric}")
             if exclude_columns:
                 print(f"   ⚠️ Excluding columns: {', '.join(exclude_columns)}")
+            if column_mappings:
+                print(f"   🔄 Column mappings: {len(column_mappings)} defined")
+                for src, tgt in list(column_mappings.items())[:3]:
+                    print(f"      • {src} → {tgt}")
+                if len(column_mappings) > 3:
+                    print(f"      ... and {len(column_mappings) - 3} more mappings")
             
             # Get database connection
             db_connection = self._get_database_connection()
@@ -398,30 +413,85 @@ class DataValidationTestCase:
                 self._record_execution_result("FAILED", {'error_message': 'Schema retrieval failed'})
                 return "FAILED"
             
-            # Find common columns (excluding specified columns)
+            # Find columns to compare using mappings
             source_cols = {col[0]: col for col in source_schema}  # column_name as key
             target_cols = {col[0]: col for col in target_schema}
+            
+            # Show exclusion information
+            if exclude_columns:
+                print(f"   ⚠️ Exclusion analysis:")
+                for excl_col in exclude_columns:
+                    in_source = excl_col in source_cols
+                    in_target = excl_col in target_cols
+                    if in_source or in_target:
+                        location = []
+                        if in_source: location.append("source")
+                        if in_target: location.append("target")
+                        print(f"      • {excl_col}: Found in {' and '.join(location)} - EXCLUDED")
+                    else:
+                        print(f"      • {excl_col}: Not found in either table - IGNORED")
+            
+            # Build comparison pairs using column mappings
+            comparison_pairs = []
+            
+            # First, add mapped columns
+            for source_col, target_col in column_mappings.items():
+                if source_col in source_cols and target_col in target_cols:
+                    if source_col not in exclude_columns and target_col not in exclude_columns:
+                        comparison_pairs.append((source_col, target_col))
+                        print(f"   ✅ Mapped: {source_col} → {target_col}")
+                    else:
+                        excluded_reason = []
+                        if source_col in exclude_columns: excluded_reason.append(f"source '{source_col}' excluded")
+                        if target_col in exclude_columns: excluded_reason.append(f"target '{target_col}' excluded")
+                        print(f"   ❌ Skipped mapping {source_col} → {target_col}: {' and '.join(excluded_reason)}")
+                else:
+                    if source_col not in source_cols:
+                        print(f"   ⚠️ Warning: Source column '{source_col}' not found in schema")
+                    if target_col not in target_cols:
+                        print(f"   ⚠️ Warning: Target column '{target_col}' not found in schema")
+            
+            # Then, add common columns that aren't already mapped
+            mapped_source_cols = set(column_mappings.keys())
+            mapped_target_cols = set(column_mappings.values())
+            
             common_columns = set(source_cols.keys()) & set(target_cols.keys())
+            excluded_common = []
+            excluded_common = []
+            for col in common_columns:
+                if (col not in mapped_source_cols and col not in mapped_target_cols):
+                    if col not in exclude_columns:
+                        comparison_pairs.append((col, col))
+                    else:
+                        excluded_common.append(col)
             
-            # Remove excluded columns
-            common_columns = [col for col in common_columns if col not in exclude_columns]
+            # Show what common columns were excluded
+            if excluded_common:
+                print(f"   ❌ Excluded common columns: {', '.join(excluded_common)}")
             
-            if not common_columns:
-                print(f"❌ No common columns found for comparison")
-                self._record_execution_result("FAILED", {'error_message': 'No common columns found'})
+            if not comparison_pairs:
+                print(f"❌ No columns found for comparison (after mappings and exclusions)")
+                self._record_execution_result("FAILED", {'error_message': 'No columns found for comparison'})
                 return "FAILED"
             
-            print(f"   📋 Comparing {len(common_columns)} columns: {', '.join(common_columns[:5])}{'...' if len(common_columns) > 5 else ''}")
+            print(f"   📋 Comparing {len(comparison_pairs)} column pairs:")
+            for src, tgt in comparison_pairs[:5]:
+                if src == tgt:
+                    print(f"      • {src}")
+                else:
+                    print(f"      • {src} → {tgt}")
+            if len(comparison_pairs) > 5:
+                print(f"      ... and {len(comparison_pairs) - 5} more pairs")
             
-            # Perform column comparison
-            comparison_results = self._compare_table_columns(
+            # Perform column comparison with mappings
+            comparison_results = self._compare_table_columns_with_mappings(
                 db_connection, source_table, target_table, 
-                common_columns, source_cols, target_cols, 
+                comparison_pairs, source_cols, target_cols, 
                 tolerance_numeric, sample_size
             )
             
             # Analyze results
-            total_columns = len(common_columns)
+            total_columns = len(comparison_pairs)
             passed_columns = len([r for r in comparison_results if r['status'] == 'PASSED'])
             failed_columns = len([r for r in comparison_results if r['status'] == 'FAILED'])
             warnings = [r for r in comparison_results if r.get('warnings')]
@@ -454,6 +524,7 @@ class DataValidationTestCase:
                 'warnings_count': len(warnings),
                 'tolerance_numeric': tolerance_numeric,
                 'sample_size': sample_size,
+                'column_mappings_count': len(column_mappings),
                 'comparison_results': comparison_results[:10],  # Store first 10 for reporting
                 'soft_failures': [],  # Column comparison warnings
                 'hard_failures': []   # Column comparison failures
@@ -873,6 +944,91 @@ class DataValidationTestCase:
             except Exception as e:
                 comparison_results.append({
                     'column': column_name,
+                    'status': 'FAILED',
+                    'reason': f'Comparison error: {str(e)}',
+                    'source_count': 0,
+                    'target_count': 0,
+                    'match_count': 0,
+                    'warnings': []
+                })
+        
+        return comparison_results
+
+    def _compare_table_columns_with_mappings(self, db_connection, source_table, target_table, 
+                                           comparison_pairs, source_cols, target_cols, 
+                                           tolerance_numeric, sample_size):
+        """Compare column values between source and target tables using column mappings."""
+        comparison_results = []
+        
+        for source_column, target_column in comparison_pairs:
+            try:
+                # Get column data type for appropriate comparison strategy
+                source_col_info = source_cols[source_column]
+                target_col_info = target_cols[target_column]
+                source_data_type = source_col_info[1].upper()  # data_type
+                
+                # Build sample queries with mapped column names
+                source_query = f"SELECT {source_column} FROM {source_table} ORDER BY {source_column} LIMIT {sample_size}"
+                target_query = f"SELECT {target_column} FROM {target_table} ORDER BY {target_column} LIMIT {sample_size}"
+                
+                # Execute queries
+                if hasattr(db_connection, 'connection') and db_connection.connection is not None:
+                    # Real database connection
+                    source_success, source_result = db_connection.execute_query(source_query)
+                    target_success, target_result = db_connection.execute_query(target_query)
+                    
+                    if not source_success or not target_success or not source_result or not target_result:
+                        comparison_results.append({
+                            'column': f"{source_column} → {target_column}" if source_column != target_column else source_column,
+                            'status': 'FAILED',
+                            'reason': 'Failed to retrieve column data',
+                            'source_count': 0,
+                            'target_count': 0,
+                            'match_count': 0,
+                            'warnings': []
+                        })
+                        continue
+                    
+                    # Extract column values from real database results
+                    source_values = [row[0] for row in source_result]
+                    target_values = [row[0] for row in target_result]
+                else:
+                    # MockDatabaseConnection - fallback for testing
+                    source_result = db_connection.execute_query(source_query)
+                    target_result = db_connection.execute_query(target_query)
+                    
+                    if not source_result or not target_result:
+                        comparison_results.append({
+                            'column': f"{source_column} → {target_column}" if source_column != target_column else source_column,
+                            'status': 'FAILED',
+                            'reason': 'Failed to retrieve column data',
+                            'source_count': 0,
+                            'target_count': 0,
+                            'match_count': 0,
+                            'warnings': []
+                        })
+                        continue
+                    
+                    # Extract column values from mock database results
+                    source_values = [row[0] for row in source_result.get('rows', [])]
+                    target_values = [row[0] for row in target_result.get('rows', [])]
+                
+                # Compare values based on data type
+                if self._is_numeric_type(source_data_type):
+                    result = self._compare_numeric_column(f"{source_column} → {target_column}" if source_column != target_column else source_column, 
+                                                        source_values, target_values, tolerance_numeric)
+                elif self._is_text_type(source_data_type):
+                    result = self._compare_text_column(f"{source_column} → {target_column}" if source_column != target_column else source_column, 
+                                                     source_values, target_values)
+                else:
+                    result = self._compare_generic_column(f"{source_column} → {target_column}" if source_column != target_column else source_column, 
+                                                        source_values, target_values)
+                
+                comparison_results.append(result)
+                
+            except Exception as e:
+                comparison_results.append({
+                    'column': f"{source_column} → {target_column}" if source_column != target_column else source_column,
                     'status': 'FAILED',
                     'reason': f'Comparison error: {str(e)}',
                     'source_count': 0,
