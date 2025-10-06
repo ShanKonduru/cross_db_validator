@@ -126945,15 +126945,2073 @@
         },
         "category_performance": {}
       }
+    },
+    {
+      "execution_metadata": {
+        "execution_id": "20251005_205538",
+        "execution_time": "2025-10-05T20:55:38.359997",
+        "duration_seconds": 0,
+        "environment": "default",
+        "application": "cross_db_validator",
+        "excel_file": "inputs/test_suite.xlsx",
+        "data_collection_version": "1.0"
+      },
+      "overall_summary": {
+        "total_tests": 38,
+        "passed_tests": 32,
+        "failed_tests": 3,
+        "skipped_tests": 3,
+        "passed_rate": 84.21,
+        "failed_rate": 7.89,
+        "skipped_rate": 7.89
+      },
+      "sheet_level_results": {
+        "SMOKE": {
+          "summary": {
+            "total_tests": 29,
+            "passed_tests": 29,
+            "failed_tests": 0,
+            "skipped_tests": 0,
+            "passed_rate": 100.0,
+            "failed_rate": 0.0,
+            "skipped_rate": 0.0
+          },
+          "test_cases": [
+            {
+              "test_case_id": "SMOKE_PG_001",
+              "test_case_name": "Environment Setup Validation",
+              "test_category": "SETUP",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 56,
+              "tags": [
+                "smoke",
+                "db",
+                "setup"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_002",
+              "test_case_name": "Configuration Availability",
+              "test_category": "CONFIGURATION",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 36,
+              "tags": [
+                "smoke",
+                "db",
+                "config"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_003",
+              "test_case_name": "Credentials Validation",
+              "test_category": "SECURITY",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 35,
+              "tags": [
+                "smoke",
+                "db",
+                "security"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_004",
+              "test_case_name": "Database Connectivity",
+              "test_category": "CONNECTION",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 151,
+              "tags": [
+                "smoke",
+                "db",
+                "connection"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_005",
+              "test_case_name": "Basic Database Queries",
+              "test_category": "QUERIES",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 40,
+              "tags": [
+                "smoke",
+                "db",
+                "queries"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_007",
+              "test_case_name": "Products Table Exists",
+              "test_category": "TABLE_EXISTS",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 41,
+              "tags": [
+                "smoke",
+                "table",
+                "structure"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_008",
+              "test_case_name": "Employees Table Exists",
+              "test_category": "TABLE_EXISTS",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 42,
+              "tags": [
+                "smoke",
+                "table",
+                "structure"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_009",
+              "test_case_name": "Orders Table Exists",
+              "test_category": "TABLE_EXISTS",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 38,
+              "tags": [
+                "smoke",
+                "table",
+                "structure"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_010",
+              "test_case_name": "Products Table Select Test",
+              "test_category": "TABLE_SELECT",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 41,
+              "tags": [
+                "smoke",
+                "table",
+                "queries"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_011",
+              "test_case_name": "Employees Table Select Test",
+              "test_category": "TABLE_SELECT",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 40,
+              "tags": [
+                "smoke",
+                "table",
+                "queries"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_012",
+              "test_case_name": "Orders Table Select Test",
+              "test_category": "TABLE_SELECT",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 41,
+              "tags": [
+                "smoke",
+                "table",
+                "queries"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_013",
+              "test_case_name": "Products Table Has Data",
+              "test_category": "TABLE_ROWS",
+              "priority": "MEDIUM",
+              "status": "PASSED",
+              "execution_time_ms": 40,
+              "tags": [
+                "smoke",
+                "table",
+                "data"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_014",
+              "test_case_name": "Employees Table Has Data",
+              "test_category": "TABLE_ROWS",
+              "priority": "MEDIUM",
+              "status": "PASSED",
+              "execution_time_ms": 143,
+              "tags": [
+                "smoke",
+                "table",
+                "data"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_015",
+              "test_case_name": "Orders Table Has Data",
+              "test_category": "TABLE_ROWS",
+              "priority": "MEDIUM",
+              "status": "PASSED",
+              "execution_time_ms": 40,
+              "tags": [
+                "smoke",
+                "table",
+                "data"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_016",
+              "test_case_name": "Products Table Structure",
+              "test_category": "TABLE_STRUCTURE",
+              "priority": "LOW",
+              "status": "PASSED",
+              "execution_time_ms": 45,
+              "tags": [
+                "smoke",
+                "table",
+                "structure"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_017",
+              "test_case_name": "Employees Table Structure",
+              "test_category": "TABLE_STRUCTURE",
+              "priority": "LOW",
+              "status": "PASSED",
+              "execution_time_ms": 153,
+              "tags": [
+                "smoke",
+                "table",
+                "structure"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_018",
+              "test_case_name": "Orders Table Structure",
+              "test_category": "TABLE_STRUCTURE",
+              "priority": "LOW",
+              "status": "PASSED",
+              "execution_time_ms": 44,
+              "tags": [
+                "smoke",
+                "table",
+                "structure"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_019",
+              "test_case_name": "Products Table Exists",
+              "test_category": "TABLE_EXISTS",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 39,
+              "tags": [
+                "smoke",
+                "table",
+                "structure"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_020",
+              "test_case_name": "Employees Table Exists",
+              "test_category": "TABLE_EXISTS",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 38,
+              "tags": [
+                "smoke",
+                "table",
+                "structure"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_021",
+              "test_case_name": "Orders Table Exists",
+              "test_category": "TABLE_EXISTS",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 38,
+              "tags": [
+                "smoke",
+                "table",
+                "structure"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_022",
+              "test_case_name": "Products Table Select Test",
+              "test_category": "TABLE_SELECT",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 38,
+              "tags": [
+                "smoke",
+                "table",
+                "queries"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_023",
+              "test_case_name": "Employees Table Select Test",
+              "test_category": "TABLE_SELECT",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 39,
+              "tags": [
+                "smoke",
+                "table",
+                "queries"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_024",
+              "test_case_name": "Orders Table Select Test",
+              "test_category": "TABLE_SELECT",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 39,
+              "tags": [
+                "smoke",
+                "table",
+                "queries"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_025",
+              "test_case_name": "Products Table Has Data",
+              "test_category": "TABLE_ROWS",
+              "priority": "MEDIUM",
+              "status": "PASSED",
+              "execution_time_ms": 38,
+              "tags": [
+                "smoke",
+                "table",
+                "data"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_026",
+              "test_case_name": "Employees Table Has Data",
+              "test_category": "TABLE_ROWS",
+              "priority": "MEDIUM",
+              "status": "PASSED",
+              "execution_time_ms": 43,
+              "tags": [
+                "smoke",
+                "table",
+                "data"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_027",
+              "test_case_name": "Orders Table Has Data",
+              "test_category": "TABLE_ROWS",
+              "priority": "MEDIUM",
+              "status": "PASSED",
+              "execution_time_ms": 40,
+              "tags": [
+                "smoke",
+                "table",
+                "data"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_028",
+              "test_case_name": "Products Table Structure",
+              "test_category": "TABLE_STRUCTURE",
+              "priority": "LOW",
+              "status": "PASSED",
+              "execution_time_ms": 42,
+              "tags": [
+                "smoke",
+                "table",
+                "structure"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_029",
+              "test_case_name": "Employees Table Structure",
+              "test_category": "TABLE_STRUCTURE",
+              "priority": "LOW",
+              "status": "PASSED",
+              "execution_time_ms": 41,
+              "tags": [
+                "smoke",
+                "table",
+                "structure"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_030",
+              "test_case_name": "Orders Table Structure",
+              "test_category": "TABLE_STRUCTURE",
+              "priority": "LOW",
+              "status": "PASSED",
+              "execution_time_ms": 43,
+              "tags": [
+                "smoke",
+                "table",
+                "structure"
+              ],
+              "error_message": null
+            }
+          ]
+        },
+        "DATAVALIDATIONS": {
+          "summary": {
+            "total_tests": 9,
+            "passed_tests": 3,
+            "failed_tests": 3,
+            "skipped_tests": 3,
+            "passed_rate": 33.33,
+            "failed_rate": 33.33,
+            "skipped_rate": 33.33
+          },
+          "test_cases": [
+            {
+              "test_case_id": "DVAL_001",
+              "test_case_name": "Products Schema Validation",
+              "test_category": "SCHEMA_VALIDATION",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 1000,
+              "tags": [
+                "schema",
+                "validation",
+                "products"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "DVAL_002",
+              "test_case_name": "Employees Schema Validation",
+              "test_category": "SCHEMA_VALIDATION",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 1000,
+              "tags": [
+                "schema",
+                "validation",
+                "employees"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "DVAL_003",
+              "test_case_name": "Orders Schema Validation",
+              "test_category": "SCHEMA_VALIDATION",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 1000,
+              "tags": [
+                "schema",
+                "validation",
+                "orders"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "DVAL_004",
+              "test_case_name": "Products Row Count Validation",
+              "test_category": "ROW_COUNT_VALIDATION",
+              "priority": "MEDIUM",
+              "status": "FAILED",
+              "execution_time_ms": 1000,
+              "tags": [
+                "count",
+                "validation",
+                "products"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "DVAL_005",
+              "test_case_name": "Employees Row Count Validation",
+              "test_category": "ROW_COUNT_VALIDATION",
+              "priority": "MEDIUM",
+              "status": "FAILED",
+              "execution_time_ms": 1000,
+              "tags": [
+                "count",
+                "validation",
+                "employees"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "DVAL_006",
+              "test_case_name": "Orders Row Count Validation",
+              "test_category": "ROW_COUNT_VALIDATION",
+              "priority": "MEDIUM",
+              "status": "FAILED",
+              "execution_time_ms": 1000,
+              "tags": [
+                "count",
+                "validation",
+                "orders"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "DVAL_007",
+              "test_case_name": "Products NULL Value Validation",
+              "test_category": "COL_COL_VALIDATION",
+              "priority": "MEDIUM",
+              "status": "SKIPPED",
+              "execution_time_ms": 1000,
+              "tags": [
+                "null",
+                "validation",
+                "products"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "DVAL_008",
+              "test_case_name": "Employees NULL Value Validation",
+              "test_category": "COL_COL_VALIDATION",
+              "priority": "MEDIUM",
+              "status": "SKIPPED",
+              "execution_time_ms": 1000,
+              "tags": [
+                "null",
+                "validation",
+                "employees"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "DVAL_009",
+              "test_case_name": "Orders NULL Value Validation",
+              "test_category": "COL_COL_VALIDATION",
+              "priority": "MEDIUM",
+              "status": "SKIPPED",
+              "execution_time_ms": 1000,
+              "tags": [
+                "null",
+                "validation",
+                "orders"
+              ],
+              "error_message": null
+            }
+          ]
+        }
+      },
+      "category_level_results": {
+        "SETUP": {
+          "total_tests": 1,
+          "passed_tests": 1,
+          "failed_tests": 0,
+          "skipped_tests": 0,
+          "passed_rate": 100.0,
+          "failed_rate": 0.0,
+          "skipped_rate": 0.0
+        },
+        "CONFIGURATION": {
+          "total_tests": 1,
+          "passed_tests": 1,
+          "failed_tests": 0,
+          "skipped_tests": 0,
+          "passed_rate": 100.0,
+          "failed_rate": 0.0,
+          "skipped_rate": 0.0
+        },
+        "SECURITY": {
+          "total_tests": 1,
+          "passed_tests": 1,
+          "failed_tests": 0,
+          "skipped_tests": 0,
+          "passed_rate": 100.0,
+          "failed_rate": 0.0,
+          "skipped_rate": 0.0
+        },
+        "CONNECTION": {
+          "total_tests": 1,
+          "passed_tests": 1,
+          "failed_tests": 0,
+          "skipped_tests": 0,
+          "passed_rate": 100.0,
+          "failed_rate": 0.0,
+          "skipped_rate": 0.0
+        },
+        "QUERIES": {
+          "total_tests": 1,
+          "passed_tests": 1,
+          "failed_tests": 0,
+          "skipped_tests": 0,
+          "passed_rate": 100.0,
+          "failed_rate": 0.0,
+          "skipped_rate": 0.0
+        },
+        "TABLE_EXISTS": {
+          "total_tests": 6,
+          "passed_tests": 6,
+          "failed_tests": 0,
+          "skipped_tests": 0,
+          "passed_rate": 100.0,
+          "failed_rate": 0.0,
+          "skipped_rate": 0.0
+        },
+        "TABLE_SELECT": {
+          "total_tests": 6,
+          "passed_tests": 6,
+          "failed_tests": 0,
+          "skipped_tests": 0,
+          "passed_rate": 100.0,
+          "failed_rate": 0.0,
+          "skipped_rate": 0.0
+        },
+        "TABLE_ROWS": {
+          "total_tests": 6,
+          "passed_tests": 6,
+          "failed_tests": 0,
+          "skipped_tests": 0,
+          "passed_rate": 100.0,
+          "failed_rate": 0.0,
+          "skipped_rate": 0.0
+        },
+        "TABLE_STRUCTURE": {
+          "total_tests": 6,
+          "passed_tests": 6,
+          "failed_tests": 0,
+          "skipped_tests": 0,
+          "passed_rate": 100.0,
+          "failed_rate": 0.0,
+          "skipped_rate": 0.0
+        },
+        "SCHEMA_VALIDATION": {
+          "total_tests": 3,
+          "passed_tests": 3,
+          "failed_tests": 0,
+          "skipped_tests": 0,
+          "passed_rate": 100.0,
+          "failed_rate": 0.0,
+          "skipped_rate": 0.0
+        },
+        "ROW_COUNT_VALIDATION": {
+          "total_tests": 3,
+          "passed_tests": 0,
+          "failed_tests": 3,
+          "skipped_tests": 0,
+          "passed_rate": 0.0,
+          "failed_rate": 100.0,
+          "skipped_rate": 0.0
+        },
+        "COL_COL_VALIDATION": {
+          "total_tests": 3,
+          "passed_tests": 0,
+          "failed_tests": 0,
+          "skipped_tests": 3,
+          "passed_rate": 0.0,
+          "failed_rate": 0.0,
+          "skipped_rate": 100.0
+        }
+      },
+      "test_case_details": {
+        "SMOKE_PG_001": {
+          "last_status": "PASSED",
+          "execution_time_ms": 56,
+          "sheet_name": "SMOKE",
+          "test_category": "SETUP",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_002": {
+          "last_status": "PASSED",
+          "execution_time_ms": 36,
+          "sheet_name": "SMOKE",
+          "test_category": "CONFIGURATION",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_003": {
+          "last_status": "PASSED",
+          "execution_time_ms": 35,
+          "sheet_name": "SMOKE",
+          "test_category": "SECURITY",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_004": {
+          "last_status": "PASSED",
+          "execution_time_ms": 151,
+          "sheet_name": "SMOKE",
+          "test_category": "CONNECTION",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_005": {
+          "last_status": "PASSED",
+          "execution_time_ms": 40,
+          "sheet_name": "SMOKE",
+          "test_category": "QUERIES",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_007": {
+          "last_status": "PASSED",
+          "execution_time_ms": 41,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_EXISTS",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_008": {
+          "last_status": "PASSED",
+          "execution_time_ms": 42,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_EXISTS",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_009": {
+          "last_status": "PASSED",
+          "execution_time_ms": 38,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_EXISTS",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_010": {
+          "last_status": "PASSED",
+          "execution_time_ms": 41,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_SELECT",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_011": {
+          "last_status": "PASSED",
+          "execution_time_ms": 40,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_SELECT",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_012": {
+          "last_status": "PASSED",
+          "execution_time_ms": 41,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_SELECT",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_013": {
+          "last_status": "PASSED",
+          "execution_time_ms": 40,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_ROWS",
+          "priority": "MEDIUM"
+        },
+        "SMOKE_PG_014": {
+          "last_status": "PASSED",
+          "execution_time_ms": 143,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_ROWS",
+          "priority": "MEDIUM"
+        },
+        "SMOKE_PG_015": {
+          "last_status": "PASSED",
+          "execution_time_ms": 40,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_ROWS",
+          "priority": "MEDIUM"
+        },
+        "SMOKE_PG_016": {
+          "last_status": "PASSED",
+          "execution_time_ms": 45,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_STRUCTURE",
+          "priority": "LOW"
+        },
+        "SMOKE_PG_017": {
+          "last_status": "PASSED",
+          "execution_time_ms": 153,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_STRUCTURE",
+          "priority": "LOW"
+        },
+        "SMOKE_PG_018": {
+          "last_status": "PASSED",
+          "execution_time_ms": 44,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_STRUCTURE",
+          "priority": "LOW"
+        },
+        "SMOKE_PG_019": {
+          "last_status": "PASSED",
+          "execution_time_ms": 39,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_EXISTS",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_020": {
+          "last_status": "PASSED",
+          "execution_time_ms": 38,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_EXISTS",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_021": {
+          "last_status": "PASSED",
+          "execution_time_ms": 38,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_EXISTS",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_022": {
+          "last_status": "PASSED",
+          "execution_time_ms": 38,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_SELECT",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_023": {
+          "last_status": "PASSED",
+          "execution_time_ms": 39,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_SELECT",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_024": {
+          "last_status": "PASSED",
+          "execution_time_ms": 39,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_SELECT",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_025": {
+          "last_status": "PASSED",
+          "execution_time_ms": 38,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_ROWS",
+          "priority": "MEDIUM"
+        },
+        "SMOKE_PG_026": {
+          "last_status": "PASSED",
+          "execution_time_ms": 43,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_ROWS",
+          "priority": "MEDIUM"
+        },
+        "SMOKE_PG_027": {
+          "last_status": "PASSED",
+          "execution_time_ms": 40,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_ROWS",
+          "priority": "MEDIUM"
+        },
+        "SMOKE_PG_028": {
+          "last_status": "PASSED",
+          "execution_time_ms": 42,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_STRUCTURE",
+          "priority": "LOW"
+        },
+        "SMOKE_PG_029": {
+          "last_status": "PASSED",
+          "execution_time_ms": 41,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_STRUCTURE",
+          "priority": "LOW"
+        },
+        "SMOKE_PG_030": {
+          "last_status": "PASSED",
+          "execution_time_ms": 43,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_STRUCTURE",
+          "priority": "LOW"
+        },
+        "DVAL_001": {
+          "last_status": "PASSED",
+          "execution_time_ms": 1000,
+          "sheet_name": "DATAVALIDATIONS",
+          "test_category": "SCHEMA_VALIDATION",
+          "priority": "HIGH"
+        },
+        "DVAL_002": {
+          "last_status": "PASSED",
+          "execution_time_ms": 1000,
+          "sheet_name": "DATAVALIDATIONS",
+          "test_category": "SCHEMA_VALIDATION",
+          "priority": "HIGH"
+        },
+        "DVAL_003": {
+          "last_status": "PASSED",
+          "execution_time_ms": 1000,
+          "sheet_name": "DATAVALIDATIONS",
+          "test_category": "SCHEMA_VALIDATION",
+          "priority": "HIGH"
+        },
+        "DVAL_004": {
+          "last_status": "FAILED",
+          "execution_time_ms": 1000,
+          "sheet_name": "DATAVALIDATIONS",
+          "test_category": "ROW_COUNT_VALIDATION",
+          "priority": "MEDIUM"
+        },
+        "DVAL_005": {
+          "last_status": "FAILED",
+          "execution_time_ms": 1000,
+          "sheet_name": "DATAVALIDATIONS",
+          "test_category": "ROW_COUNT_VALIDATION",
+          "priority": "MEDIUM"
+        },
+        "DVAL_006": {
+          "last_status": "FAILED",
+          "execution_time_ms": 1000,
+          "sheet_name": "DATAVALIDATIONS",
+          "test_category": "ROW_COUNT_VALIDATION",
+          "priority": "MEDIUM"
+        },
+        "DVAL_007": {
+          "last_status": "SKIPPED",
+          "execution_time_ms": 1000,
+          "sheet_name": "DATAVALIDATIONS",
+          "test_category": "COL_COL_VALIDATION",
+          "priority": "MEDIUM"
+        },
+        "DVAL_008": {
+          "last_status": "SKIPPED",
+          "execution_time_ms": 1000,
+          "sheet_name": "DATAVALIDATIONS",
+          "test_category": "COL_COL_VALIDATION",
+          "priority": "MEDIUM"
+        },
+        "DVAL_009": {
+          "last_status": "SKIPPED",
+          "execution_time_ms": 1000,
+          "sheet_name": "DATAVALIDATIONS",
+          "test_category": "COL_COL_VALIDATION",
+          "priority": "MEDIUM"
+        }
+      },
+      "performance_metrics": {
+        "total_execution_time_ms": 10504,
+        "average_test_time_ms": 276.42,
+        "slowest_tests": [
+          {
+            "test_id": "DVAL_005",
+            "execution_time_ms": 1000,
+            "sheet_name": "DATAVALIDATIONS"
+          },
+          {
+            "test_id": "DVAL_006",
+            "execution_time_ms": 1000,
+            "sheet_name": "DATAVALIDATIONS"
+          },
+          {
+            "test_id": "DVAL_007",
+            "execution_time_ms": 1000,
+            "sheet_name": "DATAVALIDATIONS"
+          },
+          {
+            "test_id": "DVAL_008",
+            "execution_time_ms": 1000,
+            "sheet_name": "DATAVALIDATIONS"
+          },
+          {
+            "test_id": "DVAL_009",
+            "execution_time_ms": 1000,
+            "sheet_name": "DATAVALIDATIONS"
+          }
+        ],
+        "fastest_tests": [
+          {
+            "test_id": "SMOKE_PG_003",
+            "execution_time_ms": 35,
+            "sheet_name": "SMOKE"
+          },
+          {
+            "test_id": "SMOKE_PG_002",
+            "execution_time_ms": 36,
+            "sheet_name": "SMOKE"
+          },
+          {
+            "test_id": "SMOKE_PG_009",
+            "execution_time_ms": 38,
+            "sheet_name": "SMOKE"
+          },
+          {
+            "test_id": "SMOKE_PG_020",
+            "execution_time_ms": 38,
+            "sheet_name": "SMOKE"
+          },
+          {
+            "test_id": "SMOKE_PG_021",
+            "execution_time_ms": 38,
+            "sheet_name": "SMOKE"
+          }
+        ],
+        "sheet_performance": {
+          "SMOKE": {
+            "total_time_ms": 1504,
+            "average_time_ms": 51.86,
+            "test_count": 29
+          },
+          "DATAVALIDATIONS": {
+            "total_time_ms": 9000,
+            "average_time_ms": 1000.0,
+            "test_count": 9
+          }
+        },
+        "category_performance": {}
+      }
+    },
+    {
+      "execution_metadata": {
+        "execution_id": "20251005_205920",
+        "execution_time": "2025-10-05T20:59:20.080828",
+        "duration_seconds": 0,
+        "environment": "default",
+        "application": "cross_db_validator",
+        "excel_file": "inputs/test_suite.xlsx",
+        "data_collection_version": "1.0"
+      },
+      "overall_summary": {
+        "total_tests": 38,
+        "passed_tests": 33,
+        "failed_tests": 2,
+        "skipped_tests": 3,
+        "passed_rate": 86.84,
+        "failed_rate": 5.26,
+        "skipped_rate": 7.89
+      },
+      "sheet_level_results": {
+        "SMOKE": {
+          "summary": {
+            "total_tests": 29,
+            "passed_tests": 29,
+            "failed_tests": 0,
+            "skipped_tests": 0,
+            "passed_rate": 100.0,
+            "failed_rate": 0.0,
+            "skipped_rate": 0.0
+          },
+          "test_cases": [
+            {
+              "test_case_id": "SMOKE_PG_001",
+              "test_case_name": "Environment Setup Validation",
+              "test_category": "SETUP",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 118,
+              "tags": [
+                "smoke",
+                "db",
+                "setup"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_002",
+              "test_case_name": "Configuration Availability",
+              "test_category": "CONFIGURATION",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 83,
+              "tags": [
+                "smoke",
+                "db",
+                "config"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_003",
+              "test_case_name": "Credentials Validation",
+              "test_category": "SECURITY",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 81,
+              "tags": [
+                "smoke",
+                "db",
+                "security"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_004",
+              "test_case_name": "Database Connectivity",
+              "test_category": "CONNECTION",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 93,
+              "tags": [
+                "smoke",
+                "db",
+                "connection"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_005",
+              "test_case_name": "Basic Database Queries",
+              "test_category": "QUERIES",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 110,
+              "tags": [
+                "smoke",
+                "db",
+                "queries"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_007",
+              "test_case_name": "Products Table Exists",
+              "test_category": "TABLE_EXISTS",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 87,
+              "tags": [
+                "smoke",
+                "table",
+                "structure"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_008",
+              "test_case_name": "Employees Table Exists",
+              "test_category": "TABLE_EXISTS",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 90,
+              "tags": [
+                "smoke",
+                "table",
+                "structure"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_009",
+              "test_case_name": "Orders Table Exists",
+              "test_category": "TABLE_EXISTS",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 83,
+              "tags": [
+                "smoke",
+                "table",
+                "structure"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_010",
+              "test_case_name": "Products Table Select Test",
+              "test_category": "TABLE_SELECT",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 197,
+              "tags": [
+                "smoke",
+                "table",
+                "queries"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_011",
+              "test_case_name": "Employees Table Select Test",
+              "test_category": "TABLE_SELECT",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 87,
+              "tags": [
+                "smoke",
+                "table",
+                "queries"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_012",
+              "test_case_name": "Orders Table Select Test",
+              "test_category": "TABLE_SELECT",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 87,
+              "tags": [
+                "smoke",
+                "table",
+                "queries"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_013",
+              "test_case_name": "Products Table Has Data",
+              "test_category": "TABLE_ROWS",
+              "priority": "MEDIUM",
+              "status": "PASSED",
+              "execution_time_ms": 86,
+              "tags": [
+                "smoke",
+                "table",
+                "data"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_014",
+              "test_case_name": "Employees Table Has Data",
+              "test_category": "TABLE_ROWS",
+              "priority": "MEDIUM",
+              "status": "PASSED",
+              "execution_time_ms": 97,
+              "tags": [
+                "smoke",
+                "table",
+                "data"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_015",
+              "test_case_name": "Orders Table Has Data",
+              "test_category": "TABLE_ROWS",
+              "priority": "MEDIUM",
+              "status": "PASSED",
+              "execution_time_ms": 83,
+              "tags": [
+                "smoke",
+                "table",
+                "data"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_016",
+              "test_case_name": "Products Table Structure",
+              "test_category": "TABLE_STRUCTURE",
+              "priority": "LOW",
+              "status": "PASSED",
+              "execution_time_ms": 99,
+              "tags": [
+                "smoke",
+                "table",
+                "structure"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_017",
+              "test_case_name": "Employees Table Structure",
+              "test_category": "TABLE_STRUCTURE",
+              "priority": "LOW",
+              "status": "PASSED",
+              "execution_time_ms": 100,
+              "tags": [
+                "smoke",
+                "table",
+                "structure"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_018",
+              "test_case_name": "Orders Table Structure",
+              "test_category": "TABLE_STRUCTURE",
+              "priority": "LOW",
+              "status": "PASSED",
+              "execution_time_ms": 92,
+              "tags": [
+                "smoke",
+                "table",
+                "structure"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_019",
+              "test_case_name": "Products Table Exists",
+              "test_category": "TABLE_EXISTS",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 88,
+              "tags": [
+                "smoke",
+                "table",
+                "structure"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_020",
+              "test_case_name": "Employees Table Exists",
+              "test_category": "TABLE_EXISTS",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 88,
+              "tags": [
+                "smoke",
+                "table",
+                "structure"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_021",
+              "test_case_name": "Orders Table Exists",
+              "test_category": "TABLE_EXISTS",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 81,
+              "tags": [
+                "smoke",
+                "table",
+                "structure"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_022",
+              "test_case_name": "Products Table Select Test",
+              "test_category": "TABLE_SELECT",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 98,
+              "tags": [
+                "smoke",
+                "table",
+                "queries"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_023",
+              "test_case_name": "Employees Table Select Test",
+              "test_category": "TABLE_SELECT",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 88,
+              "tags": [
+                "smoke",
+                "table",
+                "queries"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_024",
+              "test_case_name": "Orders Table Select Test",
+              "test_category": "TABLE_SELECT",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 83,
+              "tags": [
+                "smoke",
+                "table",
+                "queries"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_025",
+              "test_case_name": "Products Table Has Data",
+              "test_category": "TABLE_ROWS",
+              "priority": "MEDIUM",
+              "status": "PASSED",
+              "execution_time_ms": 84,
+              "tags": [
+                "smoke",
+                "table",
+                "data"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_026",
+              "test_case_name": "Employees Table Has Data",
+              "test_category": "TABLE_ROWS",
+              "priority": "MEDIUM",
+              "status": "PASSED",
+              "execution_time_ms": 197,
+              "tags": [
+                "smoke",
+                "table",
+                "data"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_027",
+              "test_case_name": "Orders Table Has Data",
+              "test_category": "TABLE_ROWS",
+              "priority": "MEDIUM",
+              "status": "PASSED",
+              "execution_time_ms": 78,
+              "tags": [
+                "smoke",
+                "table",
+                "data"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_028",
+              "test_case_name": "Products Table Structure",
+              "test_category": "TABLE_STRUCTURE",
+              "priority": "LOW",
+              "status": "PASSED",
+              "execution_time_ms": 101,
+              "tags": [
+                "smoke",
+                "table",
+                "structure"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_029",
+              "test_case_name": "Employees Table Structure",
+              "test_category": "TABLE_STRUCTURE",
+              "priority": "LOW",
+              "status": "PASSED",
+              "execution_time_ms": 208,
+              "tags": [
+                "smoke",
+                "table",
+                "structure"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "SMOKE_PG_030",
+              "test_case_name": "Orders Table Structure",
+              "test_category": "TABLE_STRUCTURE",
+              "priority": "LOW",
+              "status": "PASSED",
+              "execution_time_ms": 107,
+              "tags": [
+                "smoke",
+                "table",
+                "structure"
+              ],
+              "error_message": null
+            }
+          ]
+        },
+        "DATAVALIDATIONS": {
+          "summary": {
+            "total_tests": 9,
+            "passed_tests": 4,
+            "failed_tests": 2,
+            "skipped_tests": 3,
+            "passed_rate": 44.44,
+            "failed_rate": 22.22,
+            "skipped_rate": 33.33
+          },
+          "test_cases": [
+            {
+              "test_case_id": "DVAL_001",
+              "test_case_name": "Products Schema Validation",
+              "test_category": "SCHEMA_VALIDATION",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 1000,
+              "tags": [
+                "schema",
+                "validation",
+                "products"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "DVAL_002",
+              "test_case_name": "Employees Schema Validation",
+              "test_category": "SCHEMA_VALIDATION",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 1000,
+              "tags": [
+                "schema",
+                "validation",
+                "employees"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "DVAL_003",
+              "test_case_name": "Orders Schema Validation",
+              "test_category": "SCHEMA_VALIDATION",
+              "priority": "HIGH",
+              "status": "PASSED",
+              "execution_time_ms": 1000,
+              "tags": [
+                "schema",
+                "validation",
+                "orders"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "DVAL_004",
+              "test_case_name": "Products Row Count Validation",
+              "test_category": "ROW_COUNT_VALIDATION",
+              "priority": "MEDIUM",
+              "status": "FAILED",
+              "execution_time_ms": 1000,
+              "tags": [
+                "count",
+                "validation",
+                "products"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "DVAL_005",
+              "test_case_name": "Employees Row Count Validation",
+              "test_category": "ROW_COUNT_VALIDATION",
+              "priority": "MEDIUM",
+              "status": "FAILED",
+              "execution_time_ms": 1000,
+              "tags": [
+                "count",
+                "validation",
+                "employees"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "DVAL_006",
+              "test_case_name": "Orders Row Count Validation",
+              "test_category": "ROW_COUNT_VALIDATION",
+              "priority": "MEDIUM",
+              "status": "PASSED",
+              "execution_time_ms": 1000,
+              "tags": [
+                "count",
+                "validation",
+                "orders"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "DVAL_007",
+              "test_case_name": "Products NULL Value Validation",
+              "test_category": "COL_COL_VALIDATION",
+              "priority": "MEDIUM",
+              "status": "SKIPPED",
+              "execution_time_ms": 1000,
+              "tags": [
+                "null",
+                "validation",
+                "products"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "DVAL_008",
+              "test_case_name": "Employees NULL Value Validation",
+              "test_category": "COL_COL_VALIDATION",
+              "priority": "MEDIUM",
+              "status": "SKIPPED",
+              "execution_time_ms": 1000,
+              "tags": [
+                "null",
+                "validation",
+                "employees"
+              ],
+              "error_message": null
+            },
+            {
+              "test_case_id": "DVAL_009",
+              "test_case_name": "Orders NULL Value Validation",
+              "test_category": "COL_COL_VALIDATION",
+              "priority": "MEDIUM",
+              "status": "SKIPPED",
+              "execution_time_ms": 1000,
+              "tags": [
+                "null",
+                "validation",
+                "orders"
+              ],
+              "error_message": null
+            }
+          ]
+        }
+      },
+      "category_level_results": {
+        "SETUP": {
+          "total_tests": 1,
+          "passed_tests": 1,
+          "failed_tests": 0,
+          "skipped_tests": 0,
+          "passed_rate": 100.0,
+          "failed_rate": 0.0,
+          "skipped_rate": 0.0
+        },
+        "CONFIGURATION": {
+          "total_tests": 1,
+          "passed_tests": 1,
+          "failed_tests": 0,
+          "skipped_tests": 0,
+          "passed_rate": 100.0,
+          "failed_rate": 0.0,
+          "skipped_rate": 0.0
+        },
+        "SECURITY": {
+          "total_tests": 1,
+          "passed_tests": 1,
+          "failed_tests": 0,
+          "skipped_tests": 0,
+          "passed_rate": 100.0,
+          "failed_rate": 0.0,
+          "skipped_rate": 0.0
+        },
+        "CONNECTION": {
+          "total_tests": 1,
+          "passed_tests": 1,
+          "failed_tests": 0,
+          "skipped_tests": 0,
+          "passed_rate": 100.0,
+          "failed_rate": 0.0,
+          "skipped_rate": 0.0
+        },
+        "QUERIES": {
+          "total_tests": 1,
+          "passed_tests": 1,
+          "failed_tests": 0,
+          "skipped_tests": 0,
+          "passed_rate": 100.0,
+          "failed_rate": 0.0,
+          "skipped_rate": 0.0
+        },
+        "TABLE_EXISTS": {
+          "total_tests": 6,
+          "passed_tests": 6,
+          "failed_tests": 0,
+          "skipped_tests": 0,
+          "passed_rate": 100.0,
+          "failed_rate": 0.0,
+          "skipped_rate": 0.0
+        },
+        "TABLE_SELECT": {
+          "total_tests": 6,
+          "passed_tests": 6,
+          "failed_tests": 0,
+          "skipped_tests": 0,
+          "passed_rate": 100.0,
+          "failed_rate": 0.0,
+          "skipped_rate": 0.0
+        },
+        "TABLE_ROWS": {
+          "total_tests": 6,
+          "passed_tests": 6,
+          "failed_tests": 0,
+          "skipped_tests": 0,
+          "passed_rate": 100.0,
+          "failed_rate": 0.0,
+          "skipped_rate": 0.0
+        },
+        "TABLE_STRUCTURE": {
+          "total_tests": 6,
+          "passed_tests": 6,
+          "failed_tests": 0,
+          "skipped_tests": 0,
+          "passed_rate": 100.0,
+          "failed_rate": 0.0,
+          "skipped_rate": 0.0
+        },
+        "SCHEMA_VALIDATION": {
+          "total_tests": 3,
+          "passed_tests": 3,
+          "failed_tests": 0,
+          "skipped_tests": 0,
+          "passed_rate": 100.0,
+          "failed_rate": 0.0,
+          "skipped_rate": 0.0
+        },
+        "ROW_COUNT_VALIDATION": {
+          "total_tests": 3,
+          "passed_tests": 1,
+          "failed_tests": 2,
+          "skipped_tests": 0,
+          "passed_rate": 33.33,
+          "failed_rate": 66.67,
+          "skipped_rate": 0.0
+        },
+        "COL_COL_VALIDATION": {
+          "total_tests": 3,
+          "passed_tests": 0,
+          "failed_tests": 0,
+          "skipped_tests": 3,
+          "passed_rate": 0.0,
+          "failed_rate": 0.0,
+          "skipped_rate": 100.0
+        }
+      },
+      "test_case_details": {
+        "SMOKE_PG_001": {
+          "last_status": "PASSED",
+          "execution_time_ms": 118,
+          "sheet_name": "SMOKE",
+          "test_category": "SETUP",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_002": {
+          "last_status": "PASSED",
+          "execution_time_ms": 83,
+          "sheet_name": "SMOKE",
+          "test_category": "CONFIGURATION",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_003": {
+          "last_status": "PASSED",
+          "execution_time_ms": 81,
+          "sheet_name": "SMOKE",
+          "test_category": "SECURITY",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_004": {
+          "last_status": "PASSED",
+          "execution_time_ms": 93,
+          "sheet_name": "SMOKE",
+          "test_category": "CONNECTION",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_005": {
+          "last_status": "PASSED",
+          "execution_time_ms": 110,
+          "sheet_name": "SMOKE",
+          "test_category": "QUERIES",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_007": {
+          "last_status": "PASSED",
+          "execution_time_ms": 87,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_EXISTS",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_008": {
+          "last_status": "PASSED",
+          "execution_time_ms": 90,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_EXISTS",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_009": {
+          "last_status": "PASSED",
+          "execution_time_ms": 83,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_EXISTS",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_010": {
+          "last_status": "PASSED",
+          "execution_time_ms": 197,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_SELECT",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_011": {
+          "last_status": "PASSED",
+          "execution_time_ms": 87,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_SELECT",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_012": {
+          "last_status": "PASSED",
+          "execution_time_ms": 87,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_SELECT",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_013": {
+          "last_status": "PASSED",
+          "execution_time_ms": 86,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_ROWS",
+          "priority": "MEDIUM"
+        },
+        "SMOKE_PG_014": {
+          "last_status": "PASSED",
+          "execution_time_ms": 97,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_ROWS",
+          "priority": "MEDIUM"
+        },
+        "SMOKE_PG_015": {
+          "last_status": "PASSED",
+          "execution_time_ms": 83,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_ROWS",
+          "priority": "MEDIUM"
+        },
+        "SMOKE_PG_016": {
+          "last_status": "PASSED",
+          "execution_time_ms": 99,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_STRUCTURE",
+          "priority": "LOW"
+        },
+        "SMOKE_PG_017": {
+          "last_status": "PASSED",
+          "execution_time_ms": 100,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_STRUCTURE",
+          "priority": "LOW"
+        },
+        "SMOKE_PG_018": {
+          "last_status": "PASSED",
+          "execution_time_ms": 92,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_STRUCTURE",
+          "priority": "LOW"
+        },
+        "SMOKE_PG_019": {
+          "last_status": "PASSED",
+          "execution_time_ms": 88,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_EXISTS",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_020": {
+          "last_status": "PASSED",
+          "execution_time_ms": 88,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_EXISTS",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_021": {
+          "last_status": "PASSED",
+          "execution_time_ms": 81,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_EXISTS",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_022": {
+          "last_status": "PASSED",
+          "execution_time_ms": 98,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_SELECT",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_023": {
+          "last_status": "PASSED",
+          "execution_time_ms": 88,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_SELECT",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_024": {
+          "last_status": "PASSED",
+          "execution_time_ms": 83,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_SELECT",
+          "priority": "HIGH"
+        },
+        "SMOKE_PG_025": {
+          "last_status": "PASSED",
+          "execution_time_ms": 84,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_ROWS",
+          "priority": "MEDIUM"
+        },
+        "SMOKE_PG_026": {
+          "last_status": "PASSED",
+          "execution_time_ms": 197,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_ROWS",
+          "priority": "MEDIUM"
+        },
+        "SMOKE_PG_027": {
+          "last_status": "PASSED",
+          "execution_time_ms": 78,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_ROWS",
+          "priority": "MEDIUM"
+        },
+        "SMOKE_PG_028": {
+          "last_status": "PASSED",
+          "execution_time_ms": 101,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_STRUCTURE",
+          "priority": "LOW"
+        },
+        "SMOKE_PG_029": {
+          "last_status": "PASSED",
+          "execution_time_ms": 208,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_STRUCTURE",
+          "priority": "LOW"
+        },
+        "SMOKE_PG_030": {
+          "last_status": "PASSED",
+          "execution_time_ms": 107,
+          "sheet_name": "SMOKE",
+          "test_category": "TABLE_STRUCTURE",
+          "priority": "LOW"
+        },
+        "DVAL_001": {
+          "last_status": "PASSED",
+          "execution_time_ms": 1000,
+          "sheet_name": "DATAVALIDATIONS",
+          "test_category": "SCHEMA_VALIDATION",
+          "priority": "HIGH"
+        },
+        "DVAL_002": {
+          "last_status": "PASSED",
+          "execution_time_ms": 1000,
+          "sheet_name": "DATAVALIDATIONS",
+          "test_category": "SCHEMA_VALIDATION",
+          "priority": "HIGH"
+        },
+        "DVAL_003": {
+          "last_status": "PASSED",
+          "execution_time_ms": 1000,
+          "sheet_name": "DATAVALIDATIONS",
+          "test_category": "SCHEMA_VALIDATION",
+          "priority": "HIGH"
+        },
+        "DVAL_004": {
+          "last_status": "FAILED",
+          "execution_time_ms": 1000,
+          "sheet_name": "DATAVALIDATIONS",
+          "test_category": "ROW_COUNT_VALIDATION",
+          "priority": "MEDIUM"
+        },
+        "DVAL_005": {
+          "last_status": "FAILED",
+          "execution_time_ms": 1000,
+          "sheet_name": "DATAVALIDATIONS",
+          "test_category": "ROW_COUNT_VALIDATION",
+          "priority": "MEDIUM"
+        },
+        "DVAL_006": {
+          "last_status": "PASSED",
+          "execution_time_ms": 1000,
+          "sheet_name": "DATAVALIDATIONS",
+          "test_category": "ROW_COUNT_VALIDATION",
+          "priority": "MEDIUM"
+        },
+        "DVAL_007": {
+          "last_status": "SKIPPED",
+          "execution_time_ms": 1000,
+          "sheet_name": "DATAVALIDATIONS",
+          "test_category": "COL_COL_VALIDATION",
+          "priority": "MEDIUM"
+        },
+        "DVAL_008": {
+          "last_status": "SKIPPED",
+          "execution_time_ms": 1000,
+          "sheet_name": "DATAVALIDATIONS",
+          "test_category": "COL_COL_VALIDATION",
+          "priority": "MEDIUM"
+        },
+        "DVAL_009": {
+          "last_status": "SKIPPED",
+          "execution_time_ms": 1000,
+          "sheet_name": "DATAVALIDATIONS",
+          "test_category": "COL_COL_VALIDATION",
+          "priority": "MEDIUM"
+        }
+      },
+      "performance_metrics": {
+        "total_execution_time_ms": 11974,
+        "average_test_time_ms": 315.11,
+        "slowest_tests": [
+          {
+            "test_id": "DVAL_005",
+            "execution_time_ms": 1000,
+            "sheet_name": "DATAVALIDATIONS"
+          },
+          {
+            "test_id": "DVAL_006",
+            "execution_time_ms": 1000,
+            "sheet_name": "DATAVALIDATIONS"
+          },
+          {
+            "test_id": "DVAL_007",
+            "execution_time_ms": 1000,
+            "sheet_name": "DATAVALIDATIONS"
+          },
+          {
+            "test_id": "DVAL_008",
+            "execution_time_ms": 1000,
+            "sheet_name": "DATAVALIDATIONS"
+          },
+          {
+            "test_id": "DVAL_009",
+            "execution_time_ms": 1000,
+            "sheet_name": "DATAVALIDATIONS"
+          }
+        ],
+        "fastest_tests": [
+          {
+            "test_id": "SMOKE_PG_027",
+            "execution_time_ms": 78,
+            "sheet_name": "SMOKE"
+          },
+          {
+            "test_id": "SMOKE_PG_003",
+            "execution_time_ms": 81,
+            "sheet_name": "SMOKE"
+          },
+          {
+            "test_id": "SMOKE_PG_021",
+            "execution_time_ms": 81,
+            "sheet_name": "SMOKE"
+          },
+          {
+            "test_id": "SMOKE_PG_002",
+            "execution_time_ms": 83,
+            "sheet_name": "SMOKE"
+          },
+          {
+            "test_id": "SMOKE_PG_009",
+            "execution_time_ms": 83,
+            "sheet_name": "SMOKE"
+          }
+        ],
+        "sheet_performance": {
+          "SMOKE": {
+            "total_time_ms": 2974,
+            "average_time_ms": 102.55,
+            "test_count": 29
+          },
+          "DATAVALIDATIONS": {
+            "total_time_ms": 9000,
+            "average_time_ms": 1000.0,
+            "test_count": 9
+          }
+        },
+        "category_performance": {}
+      }
     }
   ],
   "trends_metadata": {
     "data_version": "2.0",
-    "last_updated": "2025-10-05T19:32:41.253567",
-    "total_executions": 167,
+    "last_updated": "2025-10-05T20:59:20.196518",
+    "total_executions": 169,
     "date_range": {
       "earliest": "2025-07-07T10:52:23.270288",
-      "latest": "2025-10-05T19:32:41.190720",
+      "latest": "2025-10-05T20:59:20.080828",
       "span_days": 90
     },
     "analysis_capabilities": [

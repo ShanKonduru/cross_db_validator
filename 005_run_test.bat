@@ -1,2 +1,2 @@
 @echo off
-pytest --html=test_reports\report.html --self-contained-html tests\
+pytest --cov=. --cov-report=html --cov-report=term --cov-report=term-missing  --html=test_reports\report.html --self-contained-html tests\

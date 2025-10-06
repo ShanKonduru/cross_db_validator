@@ -82,6 +82,60 @@ def main():
     print(f"   ❌ Failed: {test_execution_data['summary']['failed']}")
     print(f"   ⏭️ Skipped: {test_execution_data['summary']['skipped']}")
     
+    # 💾 PERSISTENT DATA COLLECTION - Save execution data for trends analysis
+    print("\n💾 Saving execution data to persistent storage...")
+    try:
+        # Collect comprehensive execution data
+        data_collector = TestExecutionDataCollector()
+        
+        # Prepare execution results data structure from test_execution_data
+        execution_results = {
+            'total_duration': 0,  # Could be enhanced to track actual duration
+            'sheet_results': {}
+        }
+        
+        # Organize results by sheets from test_execution_data
+        sheet_groups = {}
+        for result in test_execution_data['test_results']:
+            sheet_name = result.get('sheet_name', 'Unknown')
+            if sheet_name not in sheet_groups:
+                sheet_groups[sheet_name] = []
+            
+            sheet_groups[sheet_name].append({
+                'test_id': result['test_id'],
+                'test_name': result.get('description', 'Unknown'),
+                'status': result['status'],
+                'execution_time_ms': result.get('execution_details', {}).get('execution_time_ms', 1000),
+                'sheet_name': sheet_name
+            })
+        
+        # Convert to expected format
+        for sheet_name, test_cases in sheet_groups.items():
+            execution_results['sheet_results'][sheet_name] = {
+                'test_cases': test_cases
+            }
+        
+        # Create comprehensive execution record
+        execution_record = data_collector.create_execution_record(
+            execution_results=execution_results,
+            execution_start_time=test_execution_data['execution_time']
+        )
+        
+        # Save to persistent storage
+        persistence = ExecutionDataPersistence()
+        if persistence.save_execution_record(execution_record):
+            print("✅ Execution data saved to persistent storage successfully!")
+            print("📈 Data will be used for future trends analysis")
+        else:
+            print("⚠️ Failed to save execution data to persistent storage")
+            
+    except Exception as e:
+        print(f"⚠️ Error saving to persistent storage: {e}")
+        import traceback
+        traceback.print_exc()
+        # Don't fail the main execution if persistence fails
+        pass
+    
     # Generate all report formats from the single execution
     print(f"\n📋 Generating all report formats from single execution...")
     
