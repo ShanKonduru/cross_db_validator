@@ -201,9 +201,10 @@ def execute_tests_once():
                     application_name = test_case.get("Application_Name", "")
                     
                     # Check if this is a cross-database validation test
-                    is_cross_db = (sheet_name == "CROSS_DB_VALIDATIONS" and 
-                                 "SRC_Application_Name" in test_case and 
-                                 "TGT_Application_Name2" in test_case)
+                    is_cross_db = ("SRC_Application_Name" in test_case and 
+                                 "TGT_Application_Name" in test_case and
+                                 "SRC_Environment_Name" in test_case and
+                                 "TGT_Environment_Name" in test_case)
                     
                     print(f"\n🔍 Processing Test Case: {test_id} - {description}")
                     print(f"   Type: {test_type}")
@@ -213,8 +214,8 @@ def execute_tests_once():
                             # Create CrossDatabaseValidationTestCase for cross-database validations
                             src_app = test_case.get("SRC_Application_Name", "")
                             src_env = test_case.get("SRC_Environment_Name", "")
-                            tgt_app = test_case.get("TGT_Application_Name2", "")
-                            tgt_env = test_case.get("TGT_Environment_Name3", "")
+                            tgt_app = test_case.get("TGT_Application_Name", "")
+                            tgt_env = test_case.get("TGT_Environment_Name", "")
                             
                             cross_db_test = CrossDatabaseValidationTestCase(
                                 test_case_id=test_id,

@@ -73,6 +73,18 @@ class CrossDatabaseValidationTestCase(DataValidationTestCase):
         self.source_connector = None
         self.target_connector = None
         
+        # Initialize WHERE clause attributes
+        self.source_where = ""
+        self.target_where = ""
+        
+        # Initialize tolerance attributes
+        self.tolerance_type = "percentage"  # Default to percentage
+        self.validation_type = "hard"  # Default to hard validation
+        self.date_tolerance = ""
+        self.float_tolerance = ""
+        self.string_tolerance = ""
+        self.decimal_precision = ""
+        
         # Parse parameters to extract source and target tables
         self._parse_test_parameters(parameters or "")
         
@@ -115,12 +127,28 @@ class CrossDatabaseValidationTestCase(DataValidationTestCase):
                         self.compare_columns = value
                     elif key == 'key_column':
                         self.key_column = value
+                    elif key == 'source_where':
+                        self.source_where = value
+                    elif key == 'target_where':
+                        self.target_where = value
                     elif key == 'tolerance':
                         try:
                             self.tolerance = float(value)
                         except ValueError:
                             print(f"⚠️ Invalid tolerance value '{value}', using default 0.0")
                             self.tolerance = 0.0
+                    elif key == 'tolerance_type':
+                        self.tolerance_type = value.lower()  # 'percentage' or 'absolute'
+                    elif key == 'validation_type':
+                        self.validation_type = value.lower()  # 'soft' or 'hard'
+                    elif key == 'date_tolerance':
+                        self.date_tolerance = value  # e.g., '1 day', '1 hour'
+                    elif key == 'float_tolerance':
+                        self.float_tolerance = value  # e.g., '5%', '10.00'
+                    elif key == 'string_tolerance':
+                        self.string_tolerance = value.lower()  # 'case_insensitive', 'trim_whitespace'
+                    elif key == 'decimal_precision':
+                        self.decimal_precision = value  # e.g., '2', 'exact'
                         
             print(f"📋 Parsed parameters:")
             print(f"   • Source table: '{self.source_table}'")
@@ -129,8 +157,24 @@ class CrossDatabaseValidationTestCase(DataValidationTestCase):
                 print(f"   • Compare columns: '{self.compare_columns}'")
             if self.key_column:
                 print(f"   • Key column: '{self.key_column}'")
+            if hasattr(self, 'source_where') and self.source_where:
+                print(f"   • Source WHERE: '{self.source_where}'")
+            if hasattr(self, 'target_where') and self.target_where:
+                print(f"   • Target WHERE: '{self.target_where}'")
             if hasattr(self, 'tolerance') and self.tolerance > 0:
                 print(f"   • Tolerance: {self.tolerance}%")
+            if hasattr(self, 'tolerance_type') and self.tolerance_type:
+                print(f"   • Tolerance type: '{self.tolerance_type}'")
+            if hasattr(self, 'validation_type') and self.validation_type:
+                print(f"   • Validation type: '{self.validation_type}'")
+            if hasattr(self, 'date_tolerance') and self.date_tolerance:
+                print(f"   • Date tolerance: '{self.date_tolerance}'")
+            if hasattr(self, 'float_tolerance') and self.float_tolerance:
+                print(f"   • Float tolerance: '{self.float_tolerance}'")
+            if hasattr(self, 'string_tolerance') and self.string_tolerance:
+                print(f"   • String tolerance: '{self.string_tolerance}'")
+            if hasattr(self, 'decimal_precision') and self.decimal_precision:
+                print(f"   • Decimal precision: '{self.decimal_precision}'")
             
         except Exception as e:
             print(f"⚠️ Error parsing parameters '{parameters}': {e}")
@@ -568,19 +612,24 @@ class CrossDatabaseValidationTestCase(DataValidationTestCase):
         """
         Execute cross-database row count validation.
         Compares row counts between source and target tables in different databases.
+        Supports optional WHERE clauses for both source and target tables.
         """
         try:
             print(f"📊 Comparing row counts: {self.source_table} vs {self.target_table}")
+            if self.source_where:
+                print(f"   🔍 Source WHERE: {self.source_where}")
+            if self.target_where:
+                print(f"   🔍 Target WHERE: {self.target_where}")
             
-            # Get row count from source database
-            source_count = self.source_connector.get_row_count(self.source_table)
+            # Get row count from source database (with optional WHERE clause)
+            source_count = self.source_connector.get_row_count_with_where(self.source_table, self.source_where)
             if source_count is None:
                 print(f"❌ Could not get row count for source table: {self.source_table}")
                 self.actual_result = f"Source table row count failed: {self.source_table}"
                 return False
             
-            # Get row count from target database
-            target_count = self.target_connector.get_row_count(self.target_table)
+            # Get row count from target database (with optional WHERE clause)
+            target_count = self.target_connector.get_row_count_with_where(self.target_table, self.target_where)
             if target_count is None:
                 print(f"❌ Could not get row count for target table: {self.target_table}")
                 self.actual_result = f"Target table row count failed: {self.target_table}"
@@ -589,16 +638,22 @@ class CrossDatabaseValidationTestCase(DataValidationTestCase):
             print(f"✅ Source table row count: {source_count}")
             print(f"✅ Target table row count: {target_count}")
             
-            # Compare row counts with default tolerance of 0% (reuse existing logic from parent class)
-            tolerance_percent = 0.0  # Default tolerance for cross-database validation
+            # Compare row counts with tolerance (use parsed tolerance or default 0%)
+            tolerance_percent = getattr(self, 'tolerance', 0.0)
             result = self._compare_row_counts(source_count, target_count, tolerance_percent)
             
             if result:
                 print(f"✅ Row count validation passed for {self.source_table} vs {self.target_table}")
-                self.actual_result = f"Row count validation successful - Source: {source_count}, Target: {target_count}"
+                where_info = ""
+                if self.source_where or self.target_where:
+                    where_info = f" (with WHERE clauses)"
+                self.actual_result = f"Row count validation successful{where_info} - Source: {source_count}, Target: {target_count}"
             else:
                 print(f"❌ Row count validation failed for {self.source_table} vs {self.target_table}")
-                self.actual_result = f"Row count mismatch - Source: {source_count}, Target: {target_count}"
+                where_info = ""
+                if self.source_where or self.target_where:
+                    where_info = f" (with WHERE clauses)"
+                self.actual_result = f"Row count mismatch{where_info} - Source: {source_count}, Target: {target_count}"
             
             return result
             
@@ -614,6 +669,10 @@ class CrossDatabaseValidationTestCase(DataValidationTestCase):
         """
         try:
             print(f"🔍 Comparing column values: {self.source_table} vs {self.target_table}")
+            if self.source_where:
+                print(f"   🔍 Source WHERE: {self.source_where}")
+            if self.target_where:
+                print(f"   🔍 Target WHERE: {self.target_where}")
             
             # Parse additional parameters for column validation
             compare_columns = getattr(self, 'compare_columns', None)
@@ -632,9 +691,25 @@ class CrossDatabaseValidationTestCase(DataValidationTestCase):
             sample_size = 10  # Default sample size
             print(f"   📝 Sample size: {sample_size} rows")
             
-            # Build queries to get sample data
-            source_query = f"SELECT {key_column}, {compare_columns} FROM {self.source_table} ORDER BY {key_column} LIMIT {sample_size}"
-            target_query = f"SELECT {key_column}, {compare_columns} FROM {self.target_table} ORDER BY {key_column} LIMIT {sample_size}"
+            # Build queries to get sample data with optional WHERE clauses
+            source_where_clause = ""
+            if self.source_where:
+                # Ensure WHERE clause starts with WHERE if not already present
+                if not self.source_where.strip().upper().startswith('WHERE'):
+                    source_where_clause = f"WHERE {self.source_where}"
+                else:
+                    source_where_clause = self.source_where
+            
+            target_where_clause = ""
+            if self.target_where:
+                # Ensure WHERE clause starts with WHERE if not already present
+                if not self.target_where.strip().upper().startswith('WHERE'):
+                    target_where_clause = f"WHERE {self.target_where}"
+                else:
+                    target_where_clause = self.target_where
+            
+            source_query = f"SELECT {key_column}, {compare_columns} FROM {self.source_table} {source_where_clause} ORDER BY {key_column} LIMIT {sample_size}"
+            target_query = f"SELECT {key_column}, {compare_columns} FROM {self.target_table} {target_where_clause} ORDER BY {key_column} LIMIT {sample_size}"
             
             # Execute source query
             source_success, source_data = self.source_connector.execute_query(source_query)

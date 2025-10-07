@@ -112,6 +112,21 @@ class OracleConnector(DatabaseConnectionBase):
             return result[0][0]
         return 0
     
+    def get_row_count_with_where(self, table_name: str, where_clause: str = None) -> int:
+        """Get row count for Oracle table with optional WHERE clause"""
+        if where_clause:
+            # Ensure WHERE clause starts with WHERE if not already present
+            if not where_clause.strip().upper().startswith('WHERE'):
+                where_clause = f"WHERE {where_clause}"
+            query = f"SELECT COUNT(*) FROM {table_name} {where_clause}"
+        else:
+            query = f"SELECT COUNT(*) FROM {table_name}"
+            
+        success, result = self.execute_query(query)
+        if success and result:
+            return result[0][0]
+        return 0
+    
     def close(self) -> None:
         """Close the Oracle database connection. Alias for disconnect method."""
         self.disconnect()
