@@ -42,7 +42,7 @@ class SmokeTestCase:
         """
         Execute the smoke test based on the test category.
         Uses the database test framework to perform actual database operations.
-        Enhanced with execution time tracking.
+        Enhanced with execution time tracking and expected vs actual result evaluation.
         """
         self._execution_start_time = time.time()
         
@@ -69,22 +69,55 @@ class SmokeTestCase:
             if not test_instance:
                 return f"SKIPPED: Unsupported test category '{self.test_category}'"
             
-            # Execute the test
-            result = test_instance.execute()
+            # Execute the test and get functional result
+            functional_result = test_instance.execute()
             
-            # Parse the result to return standard status
-            if result.startswith("PASSED"):
-                print(f"✅ {self.test_case_name}: {result}")
-                self._record_execution_result("PASSED")
-                return "PASSED"
-            elif result.startswith("SKIPPED"):
-                print(f"⏭️  {self.test_case_name}: {result}")
+            # Determine the basic functional outcome
+            if functional_result.startswith("PASSED"):
+                test_passed_functionally = True
+                basic_status = "PASSED"
+            elif functional_result.startswith("SKIPPED"):
+                # For skipped tests, return as-is without expected result comparison
+                print(f"⏭️  {self.test_case_name}: {functional_result}")
                 self._record_execution_result("SKIPPED")
                 return "SKIPPED"
             else:  # FAILED
-                print(f"❌ {self.test_case_name}: {result}")
-                self._record_execution_result("FAILED")
-                return "FAILED"
+                test_passed_functionally = False
+                basic_status = "FAILED"
+            
+            # Compare with expected result (if available)
+            if hasattr(self, 'expected_result') and self.expected_result:
+                expected_to_pass = (self.expected_result.upper() == "PASS")
+                
+                # Determine final status based on expected vs actual
+                if expected_to_pass and test_passed_functionally:
+                    # Expected to pass and did pass
+                    final_result = "PASSED"
+                    print(f"✅ {self.test_case_name}: PASSED (Expected: PASS, Result: PASS)")
+                elif expected_to_pass and not test_passed_functionally:
+                    # Expected to pass but failed
+                    final_result = "FAILED"
+                    print(f"❌ {self.test_case_name}: FAILED (Expected: PASS, Result: FAIL)")
+                elif not expected_to_pass and not test_passed_functionally:
+                    # Expected to fail and did fail (negative test case)
+                    final_result = "PASSED"
+                    print(f"✅ {self.test_case_name}: PASSED (Expected: FAIL, Result: FAIL) - Negative test case worked correctly")
+                else:
+                    # Expected to fail but passed
+                    final_result = "FAILED"
+                    print(f"❌ {self.test_case_name}: FAILED (Expected: FAIL, Result: PASS) - Negative test case should have failed")
+                    
+                self._record_execution_result(final_result)
+                return final_result
+            else:
+                # No expected result specified, return basic functional result
+                if basic_status == "PASSED":
+                    print(f"✅ {self.test_case_name}: {functional_result}")
+                else:
+                    print(f"❌ {self.test_case_name}: {functional_result}")
+                    
+                self._record_execution_result(basic_status)
+                return basic_status
                 
         except Exception as e:
             error_msg = f"FAILED: Unexpected error during test execution - {str(e)}"

@@ -214,21 +214,45 @@ class DataValidationTestCase:
         try:
             # Route to appropriate validation based on test category
             if self.test_category == "SCHEMA_VALIDATION":
-                result = self._execute_schema_validation()
+                functional_result = self._execute_schema_validation()
             elif self.test_category == "ROW_COUNT_VALIDATION":
-                result = self._execute_row_count_validation()
+                functional_result = self._execute_row_count_validation()
             elif self.test_category == "COL_COL_VALIDATION":
-                result = self._execute_column_comparison_validation()
+                functional_result = self._execute_column_comparison_validation()
             else:
                 # Legacy test execution for other categories
-                result = self._execute_legacy_test()
-                self._record_execution_result(result)
+                functional_result = self._execute_legacy_test()
+                self._record_execution_result(functional_result)
+                
+            # Evaluate functional result against expected result
+            test_passed_functionally = (functional_result == "PASSED")
+            expected_to_pass = (self.expected_result.upper() == "PASS")
+            
+            # Determine final status based on expected vs actual
+            if expected_to_pass and test_passed_functionally:
+                # Expected to pass and did pass
+                final_result = "PASSED"
+                print(f"✅ {self.test_case_name}: PASSED (Expected: PASS, Result: PASS)")
+            elif expected_to_pass and not test_passed_functionally:
+                # Expected to pass but failed
+                final_result = "FAILED"
+                print(f"❌ {self.test_case_name}: FAILED (Expected: PASS, Result: FAIL)")
+            elif not expected_to_pass and not test_passed_functionally:
+                # Expected to fail and did fail (negative test case)
+                final_result = "PASSED"
+                print(f"✅ {self.test_case_name}: PASSED (Expected: FAIL, Result: FAIL) - Negative test case worked correctly")
+            else:
+                # Expected to fail but passed
+                final_result = "FAILED"
+                print(f"❌ {self.test_case_name}: FAILED (Expected: FAIL, Result: PASS) - Negative test case should have failed")
+                
+            return final_result
+            
         except Exception as e:
             print(f"❌ Test execution failed: {str(e)}")
             result = "FAILED"
             self._record_execution_result(result, {'error_message': str(e)})
-        
-        return result
+            return result
 
     def _record_execution_result(self, status: str, details: dict = None):
         """Record execution result and timing for persistent trends analysis."""

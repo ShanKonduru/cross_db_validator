@@ -85,11 +85,14 @@ class CrossDatabaseValidationTestCase(DataValidationTestCase):
     
     def _parse_test_parameters(self, parameters):
         """
-        Parse test parameters to extract source and target table names.
-        Expected format: "source_table=table1;target_table=table2" or "source_table=table1,target_table=table2"
+        Parse test parameters to extract source and target table names and other validation parameters.
+        Expected format: "source_table=table1;target_table=table2;compare_columns=col1;key_column=id"
         """
         self.source_table = ""
         self.target_table = ""
+        self.compare_columns = ""
+        self.key_column = ""
+        self.tolerance = 0.0
         
         if not parameters:
             return
@@ -108,14 +111,35 @@ class CrossDatabaseValidationTestCase(DataValidationTestCase):
                         self.source_table = value
                     elif key == 'target_table':
                         self.target_table = value
+                    elif key == 'compare_columns':
+                        self.compare_columns = value
+                    elif key == 'key_column':
+                        self.key_column = value
+                    elif key == 'tolerance':
+                        try:
+                            self.tolerance = float(value)
+                        except ValueError:
+                            print(f"⚠️ Invalid tolerance value '{value}', using default 0.0")
+                            self.tolerance = 0.0
                         
-            print(f"📋 Parsed parameters - Source table: '{self.source_table}', Target table: '{self.target_table}'")
+            print(f"📋 Parsed parameters:")
+            print(f"   • Source table: '{self.source_table}'")
+            print(f"   • Target table: '{self.target_table}'")
+            if self.compare_columns:
+                print(f"   • Compare columns: '{self.compare_columns}'")
+            if self.key_column:
+                print(f"   • Key column: '{self.key_column}'")
+            if hasattr(self, 'tolerance') and self.tolerance > 0:
+                print(f"   • Tolerance: {self.tolerance}%")
             
         except Exception as e:
             print(f"⚠️ Error parsing parameters '{parameters}': {e}")
             # Set defaults if parsing fails
             self.source_table = ""
             self.target_table = ""
+            self.compare_columns = ""
+            self.key_column = ""
+            self.tolerance = 0.0
     
     def get_last_execution_details(self):
         """Get detailed results from the last execution."""
@@ -168,13 +192,27 @@ class CrossDatabaseValidationTestCase(DataValidationTestCase):
                 self.actual_result = f"Unknown test category: {self.test_category}"
                 return self.status
             
-            # Set test results
-            self.status = "PASSED" if result else "FAILED"
+            # Set test results based on expected vs actual outcome
+            test_passed_functionally = result  # True if validation succeeded, False if failed
+            expected_to_pass = (self.expected_result.upper() == "PASS")
             
-            if self.status == "PASSED":
-                print(f"✅ {self.test_name}: PASSED")
+            # Determine final status based on expected vs actual
+            if expected_to_pass and test_passed_functionally:
+                # Expected to pass and did pass
+                self.status = "PASSED"
+                print(f"✅ {self.test_name}: PASSED (Expected: PASS, Result: PASS)")
+            elif expected_to_pass and not test_passed_functionally:
+                # Expected to pass but failed
+                self.status = "FAILED"
+                print(f"❌ {self.test_name}: FAILED (Expected: PASS, Result: FAIL)")
+            elif not expected_to_pass and not test_passed_functionally:
+                # Expected to fail and did fail (negative test case)
+                self.status = "PASSED"
+                print(f"✅ {self.test_name}: PASSED (Expected: FAIL, Result: FAIL) - Negative test case worked correctly")
             else:
-                print(f"❌ {self.test_name}: FAILED")
+                # Expected to fail but passed
+                self.status = "FAILED"
+                print(f"❌ {self.test_name}: FAILED (Expected: FAIL, Result: PASS) - Negative test case should have failed")
                 
         except Exception as e:
             print(f"❌ Error executing test {self.test_case_id}: {str(e)}")
@@ -409,6 +447,78 @@ class CrossDatabaseValidationTestCase(DataValidationTestCase):
             traceback.print_exc()
             return False
     
+    def _compare_cross_db_column_data(self, source_data, target_data, key_column, compare_columns):
+        """
+        Compare column data between source and target tables.
+        """
+        try:
+            if not source_data or not target_data:
+                print(f"❌ No data to compare")
+                return False
+            
+            # Convert to dictionaries for easier comparison (using key_column as index)
+            source_dict = {}
+            target_dict = {}
+            
+            # Assuming data is in format [(col1, col2), (col1, col2), ...]
+            # where first column is key_column and second is compare_columns
+            for row in source_data:
+                if len(row) >= 2:
+                    source_dict[row[0]] = row[1]  # key -> value
+            
+            for row in target_data:
+                if len(row) >= 2:
+                    target_dict[row[0]] = row[1]  # key -> value
+            
+            print(f"📊 Source records: {len(source_dict)}")
+            print(f"📊 Target records: {len(target_dict)}")
+            
+            # Find common keys
+            common_keys = set(source_dict.keys()) & set(target_dict.keys())
+            source_only = set(source_dict.keys()) - set(target_dict.keys())
+            target_only = set(target_dict.keys()) - set(source_dict.keys())
+            
+            if source_only:
+                print(f"⚠️ Keys only in source: {list(source_only)[:5]}{'...' if len(source_only) > 5 else ''}")
+            
+            if target_only:
+                print(f"⚠️ Keys only in target: {list(target_only)[:5]}{'...' if len(target_only) > 5 else ''}")
+            
+            if not common_keys:
+                print(f"❌ No common keys found for comparison")
+                return False
+            
+            print(f"✅ Common keys for comparison: {len(common_keys)}")
+            
+            # Compare values for common keys
+            mismatches = []
+            matches = 0
+            
+            for key in list(common_keys)[:10]:  # Limit to first 10 for display
+                source_value = source_dict[key]
+                target_value = target_dict[key]
+                
+                if source_value != target_value:
+                    mismatches.append(f"Key {key}: {source_value} != {target_value}")
+                else:
+                    matches += 1
+            
+            print(f"✅ Matching values: {matches}")
+            if mismatches:
+                print(f"❌ Value mismatches found:")
+                for mismatch in mismatches[:5]:  # Show first 5
+                    print(f"   • {mismatch}")
+                if len(mismatches) > 5:
+                    print(f"   ... and {len(mismatches) - 5} more mismatches")
+                return False
+            else:
+                print(f"✅ All compared values match perfectly")
+                return True
+            
+        except Exception as e:
+            print(f"❌ Error comparing column data: {e}")
+            return False
+    
     def _execute_cross_db_schema_validation(self):
         """
         Execute cross-database schema validation.
@@ -500,38 +610,59 @@ class CrossDatabaseValidationTestCase(DataValidationTestCase):
     def _execute_cross_db_column_validation(self):
         """
         Execute cross-database column validation.
-        Compares column values between source and target tables in different databases.
+        Compares specific column values between source and target tables in different databases.
         """
         try:
             print(f"🔍 Comparing column values: {self.source_table} vs {self.target_table}")
-            print(f"   📊 Sample size: {self.sample_size} rows")
-            print(f"   🔢 Numeric tolerance: {self.tolerance_numeric}")
             
-            if self.exclude_columns:
-                print(f"   ⚠️ Excluding columns: {', '.join(self.exclude_columns)}")
-            if self.column_mappings:
-                print(f"   🔄 Column mappings: {len(self.column_mappings)} defined")
-                for src_col, tgt_col in list(self.column_mappings.items())[:3]:
-                    print(f"      • {src_col} → {tgt_col}")
-                if len(self.column_mappings) > 3:
-                    print(f"      ... and {len(self.column_mappings) - 3} more mappings")
+            # Parse additional parameters for column validation
+            compare_columns = getattr(self, 'compare_columns', None)
+            key_column = getattr(self, 'key_column', None)
             
-            # Get sample data from source database
-            source_data = self.source_connector.get_sample_data(self.source_table, self.sample_size)
-            if source_data is None or source_data.empty:
+            if not compare_columns or not key_column:
+                print(f"⚠️ Column validation requires 'compare_columns' and 'key_column' parameters")
+                print(f"   Example: compare_columns=salary;key_column=emp_id")
+                self.actual_result = "Missing required parameters for column validation"
+                return False
+            
+            print(f"   � Key column: {key_column}")
+            print(f"   📊 Comparing columns: {compare_columns}")
+            
+            # Get sample data from both tables
+            sample_size = 10  # Default sample size
+            print(f"   📝 Sample size: {sample_size} rows")
+            
+            # Build queries to get sample data
+            source_query = f"SELECT {key_column}, {compare_columns} FROM {self.source_table} ORDER BY {key_column} LIMIT {sample_size}"
+            target_query = f"SELECT {key_column}, {compare_columns} FROM {self.target_table} ORDER BY {key_column} LIMIT {sample_size}"
+            
+            # Execute source query
+            source_success, source_data = self.source_connector.execute_query(source_query)
+            if not source_success or not source_data:
                 print(f"❌ Could not get sample data from source table: {self.source_table}")
                 self.actual_result = f"Source table sample data failed: {self.source_table}"
                 return False
             
-            # Get sample data from target database
-            target_data = self.target_connector.get_sample_data(self.target_table, self.sample_size)
-            if target_data is None or target_data.empty:
+            # Execute target query
+            target_success, target_data = self.target_connector.execute_query(target_query)
+            if not target_success or not target_data:
                 print(f"❌ Could not get sample data from target table: {self.target_table}")
                 self.actual_result = f"Target table sample data failed: {self.target_table}"
                 return False
             
-            # Compare column values (reuse existing logic from parent class)
-            return self._compare_column_values(source_data, target_data)
+            print(f"✅ Source data: {len(source_data)} rows retrieved")
+            print(f"✅ Target data: {len(target_data)} rows retrieved")
+            
+            # Compare the data
+            result = self._compare_cross_db_column_data(source_data, target_data, key_column, compare_columns)
+            
+            if result:
+                print(f"✅ Column validation passed for {self.source_table} vs {self.target_table}")
+                self.actual_result = f"Column validation successful - {compare_columns} values match"
+            else:
+                print(f"❌ Column validation failed for {self.source_table} vs {self.target_table}")
+                
+            return result
             
         except Exception as e:
             print(f"❌ Column validation failed: {e}")
