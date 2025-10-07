@@ -63,6 +63,39 @@ class PostgreSQLConnector(DatabaseConnectionBase):
             return [row[0] for row in result]
         return []
     
+    def get_table_schema(self, table_name: str) -> List[Tuple[str, str]]:
+        """Get table schema information for PostgreSQL table"""
+        try:
+            # Handle schema-qualified table names (e.g., 'public.products')
+            if '.' in table_name:
+                schema_name, table_name_only = table_name.split('.', 1)
+                schema_name = schema_name.replace("'", "''")
+                table_name_only = table_name_only.replace("'", "''")
+                query = f"""
+                SELECT column_name, data_type, is_nullable, column_default
+                FROM information_schema.columns 
+                WHERE table_schema = '{schema_name}' AND table_name = '{table_name_only}'
+                ORDER BY ordinal_position
+                """
+            else:
+                # No schema specified, use current schema
+                table_name_clean = table_name.replace("'", "''")
+                query = f"""
+                SELECT column_name, data_type, is_nullable, column_default
+                FROM information_schema.columns 
+                WHERE table_name = '{table_name_clean}' AND table_schema = current_schema()
+                ORDER BY ordinal_position
+                """
+            
+            success, result = self.execute_query(query)
+            if success and result:
+                # Return tuples of (column_name, data_type) for compatibility
+                return [(row[0], row[1]) for row in result]
+            return []
+        except Exception as e:
+            print(f"Error getting table schema for {table_name}: {e}")
+            return []
+    
     def table_exists(self, table_name: str) -> bool:
         """Check if table exists in PostgreSQL - handles schema-qualified names"""
         try:
@@ -100,3 +133,7 @@ class PostgreSQLConnector(DatabaseConnectionBase):
         if success and result:
             return result[0][0]
         return 0
+    
+    def close(self) -> None:
+        """Close the PostgreSQL database connection. Alias for disconnect method."""
+        self.disconnect()

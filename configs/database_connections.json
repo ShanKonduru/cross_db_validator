@@ -322,6 +322,18 @@
           "connection_timeout": 60,
           "query_timeout": 900,
           "max_connections": 25
+        },
+        "DUMMY": {
+          "db_type": "postgresql",
+          "host": "localhost",
+          "port": 5432,
+          "database": "postgres",
+          "schema": "public",
+          "username_env_var": "DEV_DUMMY_USERNAME",
+          "password_env_var": "DEV_DUMMY_PASSWORD",
+          "connection_timeout": 30,
+          "query_timeout": 300,
+          "max_connections": 10
         }
       }
     },
@@ -389,6 +401,18 @@
           "connection_timeout": 90,
           "query_timeout": 1800,
           "max_connections": 40
+        },
+        "DUMMY": {
+          "db_type": "postgresql",
+          "host": "localhost",
+          "port": 5432,
+          "database": "postgres",
+          "schema": "public",
+          "username_env_var": "DEV_DUMMY_USERNAME",
+          "password_env_var": "DEV_DUMMY_PASSWORD",
+          "connection_timeout": 30,
+          "query_timeout": 300,
+          "max_connections": 10
         }
       }
     }

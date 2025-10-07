@@ -63,6 +63,39 @@ class OracleConnector(DatabaseConnectionBase):
             return [row[0] for row in result]
         return []
     
+    def get_table_schema(self, table_name: str) -> List[Tuple[str, str]]:
+        """Get table schema information for Oracle table"""
+        try:
+            # Handle schema-qualified table names (e.g., 'schema.table')
+            if '.' in table_name:
+                schema_name, table_name_only = table_name.split('.', 1)
+                schema_name = schema_name.upper()
+                table_name_only = table_name_only.upper()
+                query = f"""
+                SELECT column_name, data_type
+                FROM all_tab_columns 
+                WHERE owner = '{schema_name}' AND table_name = '{table_name_only}'
+                ORDER BY column_id
+                """
+            else:
+                # No schema specified, use current user schema
+                table_name_upper = table_name.upper()
+                query = f"""
+                SELECT column_name, data_type
+                FROM user_tab_columns 
+                WHERE table_name = '{table_name_upper}'
+                ORDER BY column_id
+                """
+            
+            success, result = self.execute_query(query)
+            if success and result:
+                # Return tuples of (column_name, data_type) for compatibility
+                return [(row[0], row[1]) for row in result]
+            return []
+        except Exception as e:
+            print(f"Error getting table schema for {table_name}: {e}")
+            return []
+    
     def table_exists(self, table_name: str) -> bool:
         """Check if table exists in Oracle"""
         success, result = self.execute_query(
@@ -78,3 +111,7 @@ class OracleConnector(DatabaseConnectionBase):
         if success and result:
             return result[0][0]
         return 0
+    
+    def close(self) -> None:
+        """Close the Oracle database connection. Alias for disconnect method."""
+        self.disconnect()

@@ -3,6 +3,7 @@ import os
 import sys
 from dotenv import load_dotenv
 from src.data_validation_test_case import DataValidationTestCase
+from src.cross_database_validation_test_case import CrossDatabaseValidationTestCase
 from src.database_config_manager import DatabaseConfigManager
 from src.excel_test_case_reader import ExcelTestCaseReader
 from src.markdown_report_generator import MarkdownReportGenerator
@@ -199,12 +200,67 @@ def execute_tests_once():
                     environment_name = test_case.get("Environment_Name", "")
                     application_name = test_case.get("Application_Name", "")
                     
+                    # Check if this is a cross-database validation test
+                    is_cross_db = (sheet_name == "CROSS_DB_VALIDATIONS" and 
+                                 "SRC_Application_Name" in test_case and 
+                                 "TGT_Application_Name2" in test_case)
+                    
                     print(f"\n🔍 Processing Test Case: {test_id} - {description}")
                     print(f"   Type: {test_type}")
                     
                     try:
-                        if test_type == "DATA_VALIDATION" or test_type in ["SCHEMA_VALIDATION", "ROW_COUNT_VALIDATION", "COL_COL_VALIDATION"]:
-                            # Create DataValidationTestCase
+                        if is_cross_db and test_type in ["SCHEMA_VALIDATION", "ROW_COUNT_VALIDATION", "COL_COL_VALIDATION"]:
+                            # Create CrossDatabaseValidationTestCase for cross-database validations
+                            src_app = test_case.get("SRC_Application_Name", "")
+                            src_env = test_case.get("SRC_Environment_Name", "")
+                            tgt_app = test_case.get("TGT_Application_Name2", "")
+                            tgt_env = test_case.get("TGT_Environment_Name3", "")
+                            
+                            cross_db_test = CrossDatabaseValidationTestCase(
+                                test_case_id=test_id,
+                                test_name=test_case.get("Test_Case_Name", test_id),
+                                src_application_name=src_app,
+                                src_environment_name=src_env,
+                                tgt_application_name=tgt_app,
+                                tgt_environment_name=tgt_env,
+                                test_category=test_type,
+                                expected_result=test_case.get("Expected_Result", "PASS"),
+                                description=description,
+                                parameters=test_case.get("Parameters", ""),
+                                tags=test_case.get("Tags", ""),
+                                priority=test_case.get("Priority", "Medium")
+                            )
+                            data_validation_test_objects.append(cross_db_test)
+                            
+                            # Execute the cross-database test
+                            execution_status = cross_db_test.execute()
+                            
+                            # Get detailed execution details
+                            try:
+                                execution_details = cross_db_test.get_last_execution_details()
+                            except AttributeError:
+                                execution_details = {
+                                    'execution_time_ms': getattr(cross_db_test, 'execution_time', 1.0) * 1000,
+                                    'test_type': 'CROSS_DB_VALIDATION',
+                                    'source_db': f"{src_app}.{src_env}",
+                                    'target_db': f"{tgt_app}.{tgt_env}"
+                                }
+                            
+                            # Create result object
+                            result = {
+                                'test_id': test_id,
+                                'status': execution_status,
+                                'description': description,
+                                'execution_time': datetime.now(),
+                                'execution_details': execution_details,
+                                'test_case_obj': cross_db_test,
+                                'sheet_name': sheet_name,
+                                'test_type': f"CROSS_DB_{test_type}"
+                            }
+                            test_results.append(result)
+                            
+                        elif test_type == "DATA_VALIDATION" or test_type in ["SCHEMA_VALIDATION", "ROW_COUNT_VALIDATION", "COL_COL_VALIDATION"]:
+                            # Create regular DataValidationTestCase (same database)
                             data_test = DataValidationTestCase(
                                 test_id=test_id,
                                 Test_Case_ID=test_id,
