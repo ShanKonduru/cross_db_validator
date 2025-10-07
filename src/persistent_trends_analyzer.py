@@ -51,6 +51,7 @@ class PersistentTrendsAnalyzer:
         trends_analysis = {
             'metadata': self._generate_trends_metadata(),
             'overall_trends': self._generate_overall_trends(),
+            'filter_data': self._generate_filter_data(),
             'time_based_trends': {
                 'hourly': self._generate_hourly_trends(),
                 'daily': self._generate_daily_trends(),
@@ -120,6 +121,93 @@ class PersistentTrendsAnalyzer:
                 }
         
         return overall_stats
+    
+    def _generate_filter_data(self) -> Dict:
+        """Generate filter data for applications and environments."""
+        applications = set()
+        environments = set()
+        source_applications = set()
+        source_environments = set()
+        target_applications = set()
+        target_environments = set()
+        
+        print(f"🔍 Debug: Processing {len(self.execution_history)} execution records for filter data...")
+        
+        for record in self.execution_history:
+            # Standard application and environment from metadata
+            metadata = record.get('execution_metadata', {})
+            if 'application' in metadata:
+                applications.add(metadata['application'])
+                print(f"🔍 Found application: {metadata['application']}")
+            if 'environment' in metadata:
+                environments.add(metadata['environment'])
+                print(f"🔍 Found environment: {metadata['environment']}")
+            
+            # Extract cross-database application/environment info from test cases
+            for sheet_name, sheet_data in record.get('sheet_level_results', {}).items():
+                for test_case in sheet_data.get('test_cases', []):
+                    test_id = test_case.get('test_case_id', 'unknown')
+                    test_name = test_case.get('test_case_name', '')
+                    
+                    # Look for cross-database test execution details (current format)
+                    if 'execution_details' in test_case:
+                        details = test_case['execution_details']
+                        
+                        # Parse source_db and target_db (format: "APP.ENV")
+                        if 'source_db' in details:
+                            source_db = details['source_db']
+                            if '.' in source_db:
+                                src_app, src_env = source_db.split('.', 1)
+                                source_applications.add(src_app)
+                                source_environments.add(src_env)
+                                applications.add(src_app)
+                                environments.add(src_env)
+                        
+                        if 'target_db' in details:
+                            target_db = details['target_db']
+                            if '.' in target_db:
+                                tgt_app, tgt_env = target_db.split('.', 1)
+                                target_applications.add(tgt_app)
+                                target_environments.add(tgt_env)
+                                applications.add(tgt_app)
+                                environments.add(tgt_env)
+            
+            # Also check in individual test trends data structure
+            individual_tests = record.get('individual_test_results', {})
+            for test_id, test_data in individual_tests.items():
+                if 'execution_details' in test_data:
+                    details = test_data['execution_details']
+                    print(f"🔍 Debug: Found execution_details in individual test {test_id}: {details}")
+                    
+                    # Parse source_db and target_db (format: "APP.ENV")
+                    if 'source_db' in details:
+                        source_db = details['source_db']
+                        if '.' in source_db:
+                            src_app, src_env = source_db.split('.', 1)
+                            source_applications.add(src_app)
+                            source_environments.add(src_env)
+                            applications.add(src_app)
+                            environments.add(src_env)
+                    
+                    if 'target_db' in details:
+                        target_db = details['target_db']
+                        if '.' in target_db:
+                            tgt_app, tgt_env = target_db.split('.', 1)
+                            target_applications.add(tgt_app)
+                            target_environments.add(tgt_env)
+                            applications.add(tgt_app)
+                            environments.add(tgt_env)
+        
+        result = {
+            'applications': sorted(list(applications)),
+            'environments': sorted(list(environments)),
+            'source_applications': sorted(list(source_applications)),
+            'source_environments': sorted(list(source_environments)),
+            'target_applications': sorted(list(target_applications)),
+            'target_environments': sorted(list(target_environments))
+        }
+        
+        return result
     
     def _generate_hourly_trends(self) -> Dict:
         """Generate hourly trend analysis."""
@@ -445,3 +533,272 @@ class PersistentTrendsAnalyzer:
             return "declining"
         else:
             return "stable"
+    
+    def generate_filtered_time_trends(self, application: str = None, environment: str = None, 
+                                    source_db: str = None, target_db: str = None) -> Dict:
+        """Generate time-based trends filtered by application, environment, and/or databases."""
+        filtered_history = self._filter_execution_history(application, environment, source_db, target_db)
+        
+        if not filtered_history:
+            return {
+                'error': 'No data matches the selected filters',
+                'filters_applied': {
+                    'application': application,
+                    'environment': environment,
+                    'source_db': source_db,
+                    'target_db': target_db
+                }
+            }
+        
+        return {
+            'metadata': {
+                'total_filtered_executions': len(filtered_history),
+                'filters_applied': {
+                    'application': application,
+                    'environment': environment,
+                    'source_db': source_db,
+                    'target_db': target_db
+                }
+            },
+            'hourly': self._generate_filtered_hourly_trends(filtered_history),
+            'daily': self._generate_filtered_daily_trends(filtered_history),
+            'weekly': self._generate_filtered_weekly_trends(filtered_history),
+            'monthly': self._generate_filtered_monthly_trends(filtered_history),
+            'yearly': self._generate_filtered_yearly_trends(filtered_history)
+        }
+    
+    def _filter_execution_history(self, application: str = None, environment: str = None, 
+                                 source_db: str = None, target_db: str = None) -> List[Dict]:
+        """Filter execution history based on the provided criteria."""
+        filtered_records = []
+        
+        for record in self.execution_history:
+            # Check application filter
+            if application:
+                record_app = self._extract_application_from_record(record)
+                if record_app != application:
+                    continue
+            
+            # Check environment filter
+            if environment:
+                record_env = self._extract_environment_from_record(record)
+                if record_env != environment:
+                    continue
+            
+            # Check source database filter
+            if source_db:
+                record_source = self._extract_source_db_from_record(record)
+                if record_source != source_db:
+                    continue
+            
+            # Check target database filter
+            if target_db:
+                record_target = self._extract_target_db_from_record(record)
+                if record_target != target_db:
+                    continue
+            
+            filtered_records.append(record)
+        
+        return filtered_records
+    
+    def _extract_application_from_record(self, record: Dict) -> str:
+        """Extract application from execution record."""
+        # Try to get from execution details first
+        for sheet_group in record.get('sheet_groups', []):
+            for test_case in sheet_group.get('test_cases', []):
+                execution_details = test_case.get('execution_details', {})
+                if execution_details.get('source_application'):
+                    return execution_details['source_application']
+        
+        # Fallback to pattern matching from test names
+        for sheet_group in record.get('sheet_groups', []):
+            for test_case in sheet_group.get('test_cases', []):
+                test_name = test_case.get('test_name', '')
+                if 'DUMMY' in test_name.upper():
+                    return 'DUMMY'
+                elif 'cross_db_validator' in test_name:
+                    return 'cross_db_validator'
+        
+        return 'default'
+    
+    def _extract_environment_from_record(self, record: Dict) -> str:
+        """Extract environment from execution record."""
+        # Try to get from execution details first
+        for sheet_group in record.get('sheet_groups', []):
+            for test_case in sheet_group.get('test_cases', []):
+                execution_details = test_case.get('execution_details', {})
+                if execution_details.get('source_environment'):
+                    return execution_details['source_environment']
+        
+        # Fallback to pattern matching
+        for sheet_group in record.get('sheet_groups', []):
+            for test_case in sheet_group.get('test_cases', []):
+                test_name = test_case.get('test_name', '')
+                if 'NP1' in test_name.upper():
+                    return 'NP1'
+                elif 'DEV' in test_name.upper():
+                    return 'DEV'
+                elif 'PROD' in test_name.upper():
+                    return 'production'
+        
+        return 'default'
+    
+    def _extract_source_db_from_record(self, record: Dict) -> str:
+        """Extract source database from execution record."""
+        for sheet_group in record.get('sheet_groups', []):
+            for test_case in sheet_group.get('test_cases', []):
+                execution_details = test_case.get('execution_details', {})
+                source_app = execution_details.get('source_application', '')
+                source_env = execution_details.get('source_environment', '')
+                if source_app and source_env:
+                    return f"{source_app}.{source_env}"
+        
+        return None
+    
+    def _extract_target_db_from_record(self, record: Dict) -> str:
+        """Extract target database from execution record."""
+        for sheet_group in record.get('sheet_groups', []):
+            for test_case in sheet_group.get('test_cases', []):
+                execution_details = test_case.get('execution_details', {})
+                target_app = execution_details.get('target_application', '')
+                target_env = execution_details.get('target_environment', '')
+                if target_app and target_env:
+                    return f"{target_app}.{target_env}"
+        
+        return None
+    
+    def _generate_filtered_hourly_trends(self, filtered_history: List[Dict]) -> Dict:
+        """Generate hourly trends from filtered data."""
+        hourly_data = defaultdict(lambda: {
+            'executions': 0, 'total_tests': 0, 'passed_tests': 0, 
+            'failed_tests': 0, 'skipped_tests': 0
+        })
+        
+        for record in filtered_history:
+            exec_time = dt.fromisoformat(record['execution_metadata']['execution_time'])
+            hour_key = exec_time.hour
+            summary = record.get('overall_summary', {})
+            
+            hourly_data[hour_key]['executions'] += 1
+            hourly_data[hour_key]['total_tests'] += summary.get('total_tests', 0)
+            hourly_data[hour_key]['passed_tests'] += summary.get('passed_tests', 0)
+            hourly_data[hour_key]['failed_tests'] += summary.get('failed_tests', 0)
+            hourly_data[hour_key]['skipped_tests'] += summary.get('skipped_tests', 0)
+        
+        # Calculate success rates
+        for hour, data in hourly_data.items():
+            if data['total_tests'] > 0:
+                data['passed_rate'] = round(data['passed_tests'] / data['total_tests'] * 100, 2)
+                data['failed_rate'] = round(data['failed_tests'] / data['total_tests'] * 100, 2)
+                data['skipped_rate'] = round(data['skipped_tests'] / data['total_tests'] * 100, 2)
+        
+        return dict(hourly_data)
+    
+    def _generate_filtered_daily_trends(self, filtered_history: List[Dict]) -> Dict:
+        """Generate daily trends from filtered data."""
+        daily_data = defaultdict(lambda: {
+            'executions': 0, 'total_tests': 0, 'passed_tests': 0,
+            'failed_tests': 0, 'skipped_tests': 0
+        })
+        
+        for record in filtered_history:
+            exec_time = dt.fromisoformat(record['execution_metadata']['execution_time'])
+            day_key = exec_time.strftime('%Y-%m-%d')
+            summary = record.get('overall_summary', {})
+            
+            daily_data[day_key]['executions'] += 1
+            daily_data[day_key]['total_tests'] += summary.get('total_tests', 0)
+            daily_data[day_key]['passed_tests'] += summary.get('passed_tests', 0)
+            daily_data[day_key]['failed_tests'] += summary.get('failed_tests', 0)
+            daily_data[day_key]['skipped_tests'] += summary.get('skipped_tests', 0)
+        
+        # Calculate rates
+        for day, data in daily_data.items():
+            if data['total_tests'] > 0:
+                data['passed_rate'] = round(data['passed_tests'] / data['total_tests'] * 100, 2)
+                data['failed_rate'] = round(data['failed_tests'] / data['total_tests'] * 100, 2)
+                data['skipped_rate'] = round(data['skipped_tests'] / data['total_tests'] * 100, 2)
+        
+        return dict(daily_data)
+    
+    def _generate_filtered_weekly_trends(self, filtered_history: List[Dict]) -> Dict:
+        """Generate weekly trends from filtered data."""
+        weekly_data = defaultdict(lambda: {
+            'executions': 0, 'total_tests': 0, 'passed_tests': 0,
+            'failed_tests': 0, 'skipped_tests': 0
+        })
+        
+        for record in filtered_history:
+            exec_time = dt.fromisoformat(record['execution_metadata']['execution_time'])
+            year, week, _ = exec_time.isocalendar()
+            week_key = f"{year}-W{week:02d}"
+            summary = record.get('overall_summary', {})
+            
+            weekly_data[week_key]['executions'] += 1
+            weekly_data[week_key]['total_tests'] += summary.get('total_tests', 0)
+            weekly_data[week_key]['passed_tests'] += summary.get('passed_tests', 0)
+            weekly_data[week_key]['failed_tests'] += summary.get('failed_tests', 0)
+            weekly_data[week_key]['skipped_tests'] += summary.get('skipped_tests', 0)
+        
+        # Calculate rates
+        for week, data in weekly_data.items():
+            if data['total_tests'] > 0:
+                data['passed_rate'] = round(data['passed_tests'] / data['total_tests'] * 100, 2)
+                data['failed_rate'] = round(data['failed_tests'] / data['total_tests'] * 100, 2)
+                data['skipped_rate'] = round(data['skipped_tests'] / data['total_tests'] * 100, 2)
+        
+        return dict(weekly_data)
+    
+    def _generate_filtered_monthly_trends(self, filtered_history: List[Dict]) -> Dict:
+        """Generate monthly trends from filtered data."""
+        monthly_data = defaultdict(lambda: {
+            'executions': 0, 'total_tests': 0, 'passed_tests': 0,
+            'failed_tests': 0, 'skipped_tests': 0
+        })
+        
+        for record in filtered_history:
+            exec_time = dt.fromisoformat(record['execution_metadata']['execution_time'])
+            month_key = exec_time.strftime('%Y-%m')
+            summary = record.get('overall_summary', {})
+            
+            monthly_data[month_key]['executions'] += 1
+            monthly_data[month_key]['total_tests'] += summary.get('total_tests', 0)
+            monthly_data[month_key]['passed_tests'] += summary.get('passed_tests', 0)
+            monthly_data[month_key]['failed_tests'] += summary.get('failed_tests', 0)
+            monthly_data[month_key]['skipped_tests'] += summary.get('skipped_tests', 0)
+        
+        # Calculate rates
+        for month, data in monthly_data.items():
+            if data['total_tests'] > 0:
+                data['passed_rate'] = round(data['passed_tests'] / data['total_tests'] * 100, 2)
+                data['failed_rate'] = round(data['failed_tests'] / data['total_tests'] * 100, 2)
+                data['skipped_rate'] = round(data['skipped_tests'] / data['total_tests'] * 100, 2)
+        
+        return dict(monthly_data)
+    
+    def _generate_filtered_yearly_trends(self, filtered_history: List[Dict]) -> Dict:
+        """Generate yearly trends from filtered data."""
+        yearly_data = defaultdict(lambda: {
+            'executions': 0, 'total_tests': 0, 'passed_tests': 0,
+            'failed_tests': 0, 'skipped_tests': 0
+        })
+        
+        for record in filtered_history:
+            exec_time = dt.fromisoformat(record['execution_metadata']['execution_time'])
+            year_key = str(exec_time.year)
+            summary = record.get('overall_summary', {})
+            
+            yearly_data[year_key]['executions'] += 1
+            yearly_data[year_key]['total_tests'] += summary.get('total_tests', 0)
+            yearly_data[year_key]['passed_tests'] += summary.get('passed_tests', 0)
+            yearly_data[year_key]['failed_tests'] += summary.get('failed_tests', 0)
+            yearly_data[year_key]['skipped_tests'] += summary.get('skipped_tests', 0)
+        
+        # Calculate rates
+        for year, data in yearly_data.items():
+            if data['total_tests'] > 0:
+                data['passed_rate'] = round(data['passed_tests'] / data['total_tests'] * 100, 2)
+                data['failed_rate'] = round(data['failed_tests'] / data['total_tests'] * 100, 2)
+                data['skipped_rate'] = round(data['skipped_tests'] / data['total_tests'] * 100, 2)
+        
+        return dict(yearly_data)

@@ -102,13 +102,20 @@ def main():
             if sheet_name not in sheet_groups:
                 sheet_groups[sheet_name] = []
             
-            sheet_groups[sheet_name].append({
+            # Preserve execution_details for cross-database tests
+            test_case_data = {
                 'test_id': result['test_id'],
                 'test_name': result.get('description', 'Unknown'),
                 'status': result['status'],
                 'execution_time_ms': result.get('execution_details', {}).get('execution_time_ms', 1000),
                 'sheet_name': sheet_name
-            })
+            }
+            
+            # Add execution_details if available (needed for filters)
+            if 'execution_details' in result and result['execution_details']:
+                test_case_data['execution_details'] = result['execution_details']
+            
+            sheet_groups[sheet_name].append(test_case_data)
         
         # Convert to expected format
         for sheet_name, test_cases in sheet_groups.items():
@@ -683,7 +690,11 @@ def generate_trends_report():
         
         # Generate enhanced interactive HTML report from persistent trends data
         generator = EnhancedTrendsHTMLReportGenerator()
-        output_file = generator.generate_comprehensive_trends_report(trends_data)
+        # Use the standard dashboard filename
+        output_file = generator.generate_comprehensive_trends_report(
+            trends_data, 
+            output_file="output/Cross_DB_Validator_Trends_Dashboard.html"
+        )
         print(f"   ✅ Trends analysis report generated: {output_file}")
         return output_file
         

@@ -175,6 +175,11 @@ class TestExecutionDataCollector:
                     "tags": metadata.get('tags', []),
                     "error_message": None  # As requested - no error details for trends
                 }
+                
+                # Preserve execution details for cross-database tests (needed for filtering)
+                if 'execution_details' in test_case:
+                    enriched_case['execution_details'] = test_case['execution_details']
+                
                 enriched_test_cases.append(enriched_case)
             
             sheet_results[sheet_name] = {
