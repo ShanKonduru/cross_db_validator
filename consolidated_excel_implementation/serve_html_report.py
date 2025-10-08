@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 
-def serve_html_report(port=8080):
+def serve_html_report(port=8090):
     """Serve the HTML report on a local web server."""
     
     # Change to the output directory
